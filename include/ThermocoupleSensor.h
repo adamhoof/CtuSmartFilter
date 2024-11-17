@@ -1,22 +1,23 @@
 #pragma once
 #include <CommunicationTestable.h>
 #include <OutputDevice.h>
-#include "I2CDevice.h"
-#include <SparkFunHTU21D.h>
+#include <max6675.h>
 
-class TemperatureHumiditySensor : public I2CDevice, public OutputDevice, public CommunicationTestable {
+class ThermocoupleSensor : public OutputDevice, CommunicationTestable
+{
 public:
     CommunicationAttemptResult testCommunication() const override;
 
-    TemperatureHumiditySensor(const std::string& name, byte address);
+    explicit ThermocoupleSensor(const std::string& name, int8_t csPin);
 
-    std::map<std::string, double> readValues() override;
-    std::vector<std::string> getMeasurableValues() override;
     void init() override;
 
-private:
-    HTU21D htu21d;
+    std::map<std::string, double> readValues() override;
 
+    std::vector<std::string> getMeasurableValues() override;
+
+private:
+    int8_t csPin;
+    MAX6675 thermocouple;
     double readTemperature();
-    double readHumidity();
 };
