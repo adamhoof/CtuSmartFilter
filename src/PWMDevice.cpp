@@ -1,5 +1,5 @@
 #include "PWMDevice.h"
-
+#include <algorithm>
 #include <esp32-hal-ledc.h>
 
 PWMDevice::PWMDevice(const uint8_t pwmPin, const uint8_t pwmChannel)

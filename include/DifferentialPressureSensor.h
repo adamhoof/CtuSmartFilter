@@ -5,7 +5,7 @@
 
 #include "I2CDevice.h"
 
-class DifferentialPressureSensor : public I2CDevice, OutputDevice, CommunicationTestable
+class DifferentialPressureSensor : public I2CDevice, public OutputDevice, public CommunicationTestable
 {
 public:
     CommunicationAttemptResult testCommunication() const override;

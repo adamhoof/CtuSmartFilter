@@ -5,7 +5,7 @@
 
 #include "I2CDevice.h"
 
-class CO2Sensor : public I2CDevice, OutputDevice, CommunicationTestable
+class CO2Sensor : public I2CDevice, public OutputDevice, public CommunicationTestable
 {
 public:
     CommunicationAttemptResult testCommunication() const override;

@@ -30,16 +30,19 @@ void setup()
         device.get().init();
     }
 
-    CommunicationTester::testDevices({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
-
-    pwmFan.init();
-    pwmFan.setPower(255);
-    delay(3000);
-    pwmFan.setPower(0);
-
+    const auto results = CommunicationTester::testDevices({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
+    for (const auto& r : results) {
+        Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: ": "FAILURE: ");
+        Serial.println(r.message.c_str());
+    }
 }
 
 void loop()
 {
-
+    delay(1000);
+    auto res = co2Sensor.readValues();
+    auto values = co2Sensor.getMeasurableValues();
+    for (const auto& v : values) {
+        Serial.println(res.at(v));
+    }
 }

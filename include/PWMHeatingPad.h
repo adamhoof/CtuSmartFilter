@@ -9,5 +9,5 @@ public:
 
     void init() override;
 
-    ~PWMHeatingPad() override;
+    ~PWMHeatingPad() override = default;
 };

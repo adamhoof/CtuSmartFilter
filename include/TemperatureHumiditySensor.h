@@ -4,7 +4,7 @@
 #include "I2CDevice.h"
 #include <SparkFunHTU21D.h>
 
-class TemperatureHumiditySensor : public I2CDevice, OutputDevice, CommunicationTestable {
+class TemperatureHumiditySensor : public I2CDevice, public OutputDevice, public CommunicationTestable {
 public:
     CommunicationAttemptResult testCommunication() const override;
 
