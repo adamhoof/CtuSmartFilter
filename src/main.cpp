@@ -1,38 +1,45 @@
 #include <Arduino.h>
 #include <CO2Sensor.h>
+#include <CommunicationTester.h>
 #include <DifferentialPressureSensor.h>
+#include <PWMFan.h>
+#include <PWMHeatingPad.h>
+#include <SPI.h>
 #include <TemperatureHumiditySensor.h>
 #include <Wire.h>
-#include "I2CScanner.h"
-
-I2CScanner i2cScanner;
+#include <ThermocoupleSensor.h>
 
 DifferentialPressureSensor differentialPressureSensor("DifferentialPressureSensor", 0x25);
 CO2Sensor co2Sensor("CO2Sensor", 0x62);
 TemperatureHumiditySensor temperatureHumiditySensor("TemperatureHumiditySensor", 0x40);
 
+constexpr int SPI_CS = 17;
+ThermocoupleSensor thermocoupleSensor("ThermocoupleSensor", SPI_CS);
+
+PWMFan pwmFan("PWMFan", 26,1);
+PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
+
 void setup()
 {
     Wire.begin();
+    SPI.begin(SCK, MISO, MOSI, SPI_CS);
     Serial.begin(115200);
-    i2cScanner.addDevices({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
 
-    const auto scanResults = i2cScanner.scan();
-    uint8_t failuresCount = 0;
+    const std::vector<std::reference_wrapper<Device>> devices {differentialPressureSensor,co2Sensor,temperatureHumiditySensor,thermocoupleSensor, pwmFan, pwmHeatingPad};
+    for (auto device : devices) {
+        device.get().init();
+    }
 
-    for (const auto& result : scanResults) {
-        Serial.print(result.resultStatus == I2CScanner::SUCCESS ? "SUCCESS: " : "FAILURE: ");
-        Serial.println(result.message.c_str());
-        if (result.resultStatus == I2CScanner::FAILURE) {
-            failuresCount++;
-        }
-    }
-    if (failuresCount > 0) {
-        esp_restart();
-    }
+    CommunicationTester::testDevices({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
+
+    pwmFan.init();
+    pwmFan.setPower(255);
+    delay(3000);
+    pwmFan.setPower(0);
+
 }
-
 
 void loop()
 {
+
 }

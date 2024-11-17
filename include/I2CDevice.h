@@ -1,16 +1,18 @@
 #pragma once
 #include <Arduino.h>
-#include <string>
+#include <CommunicationTestable.h>
 
-class I2CDevice {
+class I2CDevice
+{
 public:
-    I2CDevice(std::string  name, byte address);
-    virtual ~I2CDevice();
+    explicit I2CDevice(byte address);
 
-    virtual std::string getName();
-    virtual byte getAddress();
+    virtual ~I2CDevice() = default;
+
+    virtual byte getAddress() const;
+
+    CommunicationAttemptResult performTemplateCommunicationTest(const std::string& name, byte address) const;
 
 protected:
-    std::string name;
     byte address;
 };
