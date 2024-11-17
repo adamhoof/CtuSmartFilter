@@ -1,12 +1,13 @@
 #include "I2CScanner.h"
-#include <Arduino.h>
+
+#include <iomanip>
+#include <sstream>
 #include <Wire.h>
-#include <functional>
+#include <string>
 
 I2CScanner::I2CScanner() = default;
 
-void I2CScanner::addDevice(I2CDevice& i2cDevice)
-{
+void I2CScanner::addDevice(I2CDevice& i2cDevice) {
     i2cDevices.emplace_back(i2cDevice);
 }
 
@@ -14,55 +15,45 @@ void I2CScanner::addDevices(const std::vector<std::reference_wrapper<I2CDevice>>
     i2cDevices.insert(i2cDevices.end(), devicesList.begin(), devicesList.end());
 }
 
-void I2CScanner::scan()
+std::vector<I2CScanner::ScanResult> I2CScanner::scan() const
 {
-    Serial.println("Scanning...");
-    int nDevices = 0;
-    for (const auto& device: i2cDevices) {
+    std::vector<ScanResult> results;
+
+    for (const auto& device : i2cDevices) {
         const byte address = device.get().getAddress();
         const std::string deviceName = device.get().getName();
+
+        std::stringstream hexAddressStream;
+        hexAddressStream << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(2)
+                         << static_cast<int>(address);
+        std::string hexAddress = hexAddressStream.str();
 
         Wire.beginTransmission(address);
         delay(5);
         const byte error = Wire.endTransmission();
 
         if (error == 0) {
-            Serial.print("I2C device found: ");
-            Serial.print(deviceName.c_str());
-            Serial.print(" at address 0x");
-            if (address < 16)
-                Serial.print("0");
-            Serial.print(address, HEX);
-            Serial.println(" - Good!");
-            nDevices++;
-        }
-        else if (error == 4) {
-            Serial.print("Unknown error with device: ");
-            Serial.print(deviceName.c_str());
-            Serial.print(" at address 0x");
-            if (address < 16)
-                Serial.print("0");
-            Serial.print(address, HEX);
-            Serial.println(" - Bad! Device did not respond.");
-        }
-        else {
-            Serial.print("Device: ");
-            Serial.print(deviceName.c_str());
-            Serial.print(" at address 0x");
-            if (address < 16)
-                Serial.print("0");
-            Serial.print(address, HEX);
-            Serial.println(" - Bad! Device did not respond.");
+            results.push_back({
+                SUCCESS,
+                "Device '" + deviceName + "' found at address " += hexAddress
+            });
+        } else if (error == 4) {
+            results.push_back({
+                FAILURE,
+                "Unknown error with device '" + deviceName +
+                "' at address " += hexAddress
+            });
+        } else {
+            results.push_back({
+                FAILURE,
+                "Device '" + deviceName + "' at address " += hexAddress +
+                " did not respond."
+            });
         }
         delay(100);
     }
 
-    if (nDevices == 0) {
-        Serial.println("No I2C devices found");
-    }
-    else {
-        Serial.println("Scan complete");
-    }
-
-    delay(5000);
+    return results;
 }
+
+
