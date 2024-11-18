@@ -19,27 +19,39 @@ ThermocoupleSensor thermocoupleSensor("ThermocoupleSensor", SPI_CS);
 PWMFan pwmFan("PWMFan", 26,1);
 PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
 
-void setup()
+void initializeBusses()
 {
     Wire.begin();
     SPI.begin(SCK, MISO, MOSI, SPI_CS);
     Serial.begin(115200);
+}
 
-    const std::vector<std::reference_wrapper<Device>> devices {differentialPressureSensor,co2Sensor,temperatureHumiditySensor,thermocoupleSensor, pwmFan, pwmHeatingPad};
+void initializeDevices(const std::vector<std::reference_wrapper<Device>>& devices)
+{
     for (auto device : devices) {
         device.get().init();
     }
+}
 
-    const auto results = CommunicationTester::testDevices({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
+void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTestable>>& devices)
+{
+    const auto results = CommunicationTester::testDevices(devices);
     for (const auto& r : results) {
         Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: ": "FAILURE: ");
         Serial.println(r.message.c_str());
     }
 }
 
+void setup()
+{
+    initializeBusses();
+    initializeDevices({differentialPressureSensor,co2Sensor,temperatureHumiditySensor,thermocoupleSensor, pwmFan, pwmHeatingPad});
+    runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
+}
+
 void loop()
 {
-    delay(1000);
+    delay(5000);
     auto res = co2Sensor.readValues();
     auto values = co2Sensor.getMeasurableValues();
     for (const auto& v : values) {
