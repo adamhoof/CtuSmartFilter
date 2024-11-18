@@ -4,11 +4,11 @@
 
 CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const
 {
-   return performTemplateCommunicationTest(name, address);
+    return performTemplateCommunicationTest(name, address);
 }
 
 DifferentialPressureSensor::DifferentialPressureSensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name)
+    : I2CDevice(address), OutputDevice(name), lastMeasurement({"pressure", -1.0, "Pa"})
 {
 }
 
@@ -25,7 +25,6 @@ void DifferentialPressureSensor::init()
         Serial.println(errorMessage);
     }
 
-
     error = differentialPressureSensor.startContinuousMeasurementWithDiffPressureTCompAndAveraging();
     if (error) {
         Serial.print("Error trying to execute startContinuousMeasurementWithDiffPressureTCompAndAveraging(): ");
@@ -34,7 +33,7 @@ void DifferentialPressureSensor::init()
     }
 }
 
-double DifferentialPressureSensor::readDifferentialPressure()
+Measurement DifferentialPressureSensor::readDifferentialPressure()
 {
     float differentialPressure = 0.0f;
     float temperature = 0.0f;
@@ -45,17 +44,16 @@ double DifferentialPressureSensor::readDifferentialPressure()
         Serial.print("Error trying to execute readMeasurement(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return -1.0;
+        return {lastMeasurement.name, -1, lastMeasurement.unit};
     }
 
-    return differentialPressure;
+    lastMeasurement.value = static_cast<double>(differentialPressure);
+    return lastMeasurement;
 }
 
-std::map<std::string, double> DifferentialPressureSensor::readValues()
+std::vector<Measurement> DifferentialPressureSensor::performMeasurements()
 {
-    return {
-        {"pressure", readDifferentialPressure()}
-    };
+    return {readDifferentialPressure()};
 }
 
 std::vector<std::string> DifferentialPressureSensor::getMeasurableValues()

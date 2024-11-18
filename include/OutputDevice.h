@@ -1,8 +1,17 @@
 #pragma once
 #include <Device.h>
-#include <map>
 #include <string>
 #include <vector>
+
+using MeasurementName = std::string;
+using Unit = std::string;
+
+struct Measurement {
+
+    MeasurementName name;
+    double value;
+    Unit unit;
+};
 
 class OutputDevice : public Device
 {
@@ -11,9 +20,9 @@ public:
 
     ~OutputDevice() override = default;
 
-    virtual std::map<std::string, double> readValues() = 0;
+    virtual std::vector<Measurement> performMeasurements() = 0;
 
-    virtual std::vector<std::string> getMeasurableValues() = 0;
+    virtual std::vector<MeasurementName> getMeasurableValues() = 0;
 
     std::string getName() const;
 

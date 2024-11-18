@@ -12,13 +12,15 @@ public:
 
     DifferentialPressureSensor(const std::string& name, byte address);
 
-    std::map<std::string, double> readValues() override;
+    std::vector<Measurement> performMeasurements() override;
 
-    std::vector<std::string> getMeasurableValues() override;
+    std::vector<MeasurementName> getMeasurableValues() override;
 
     void init() override;
 
 private:
     SensirionI2CSdp differentialPressureSensor;
-    double readDifferentialPressure();
+    Measurement lastMeasurement;
+
+    Measurement readDifferentialPressure();
 };

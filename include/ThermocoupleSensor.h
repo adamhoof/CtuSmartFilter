@@ -12,12 +12,14 @@ public:
 
     void init() override;
 
-    std::map<std::string, double> readValues() override;
+    std::vector<Measurement> performMeasurements() override;
 
-    std::vector<std::string> getMeasurableValues() override;
+    std::vector<MeasurementName> getMeasurableValues() override;
 
 private:
     int8_t csPin;
     MAX6675 thermocouple;
-    double readTemperature();
+
+    Measurement readTemperature();
+    Measurement lastMeasurement;
 };

@@ -2,7 +2,6 @@
 #include <CommunicationTestable.h>
 #include <OutputDevice.h>
 #include <SensirionI2CScd4x.h>
-
 #include "I2CDevice.h"
 
 class CO2Sensor : public I2CDevice, public OutputDevice, public CommunicationTestable
@@ -12,16 +11,16 @@ public:
 
     CO2Sensor(const std::string& name, uint8_t address);
 
-    std::map<std::string, double> readValues() override;
+    std::vector<Measurement> performMeasurements() override;
 
-    std::vector<std::string> getMeasurableValues() override;
+    std::vector<MeasurementName> getMeasurableValues() override;
 
     void init() override;
 
 private:
     SensirionI2CScd4x scd4x;
-    uint16_t lastCO2Value;
+    Measurement lastMeasurement;
     bool isDataReady;
 
-    double readCO2Concentration();
+    Measurement readCO2Concentration();
 };

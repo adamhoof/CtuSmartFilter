@@ -7,41 +7,42 @@ CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const
 }
 
 TemperatureHumiditySensor::TemperatureHumiditySensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name)
-{
-}
+    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"temperature", -1.0, "°C"}),
+      lastHumidityMeasurement({"humidity", -1.0, "%"})
+{}
 
 void TemperatureHumiditySensor::init()
 {
     htu21d.begin();
 }
 
-double TemperatureHumiditySensor::readTemperature()
+Measurement TemperatureHumiditySensor::readTemperature()
 {
     const float temperature = htu21d.readTemperature();
     if (temperature == 999) {
         Serial.println("Error reading temperature from HTU21D.");
-        return -1.0;
+        return {lastTemperatureMeasurement.name, -1, lastTemperatureMeasurement.unit};
     }
-    return temperature;
+
+    lastTemperatureMeasurement.value = temperature;
+    return lastTemperatureMeasurement;
 }
 
-double TemperatureHumiditySensor::readHumidity()
+Measurement TemperatureHumiditySensor::readHumidity()
 {
     const float humidity = htu21d.readHumidity();
     if (humidity == 999) {
         Serial.println("Error reading humidity from HTU21D.");
-        return -1.0;
+        return {lastHumidityMeasurement.name, -1, lastHumidityMeasurement.unit};
     }
-    return humidity;
+
+    lastHumidityMeasurement.value = humidity;
+    return lastHumidityMeasurement;
 }
 
-std::map<std::string, double> TemperatureHumiditySensor::readValues()
+std::vector<Measurement> TemperatureHumiditySensor::performMeasurements()
 {
-    return {
-        {"temperature", readTemperature()},
-        {"humidity", readHumidity()}
-    };
+    return {readTemperature(), readHumidity()};
 }
 
 std::vector<std::string> TemperatureHumiditySensor::getMeasurableValues()
