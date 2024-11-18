@@ -20,6 +20,8 @@ public:
 
 private:
     SensirionI2CScd4x scd4x;
+    uint16_t lastCO2Value;
+    bool isDataReady;
 
     double readCO2Concentration();
 };

@@ -7,7 +7,7 @@ CommunicationAttemptResult CO2Sensor::testCommunication() const
 }
 
 CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
-    : I2CDevice(address), OutputDevice(name)
+    : I2CDevice(address), OutputDevice(name), lastCO2Value(0), isDataReady(false)
 {
 }
 
@@ -34,10 +34,8 @@ void CO2Sensor::init()
 
 double CO2Sensor::readCO2Concentration()
 {
-    uint16_t co2 = 0;
     float temperature = 0.0f;
     float humidity = 0.0f;
-    bool isDataReady = false;
 
     uint16_t error = scd4x.getDataReadyFlag(isDataReady);
     if (error) {
@@ -45,29 +43,24 @@ double CO2Sensor::readCO2Concentration()
         Serial.print("Error trying to execute getDataReadyFlag(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return -1.0;
+        return lastCO2Value;
     }
 
     if (!isDataReady) {
         Serial.println("Data not ready.");
-        return -1.0;
+        return lastCO2Value;
     }
 
-    error = scd4x.readMeasurement(co2, temperature, humidity);
+    error = scd4x.readMeasurement(lastCO2Value, temperature, humidity);
     if (error) {
         char errorMessage[256];
         Serial.print("Error trying to execute readMeasurement(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return -1.0;
+        return lastCO2Value;
     }
 
-    if (co2 == 0) {
-        Serial.println("Invalid sample detected.");
-        return -1.0;
-    }
-
-    return co2;
+    return lastCO2Value;
 }
 
 std::map<std::string, double> CO2Sensor::readValues()
