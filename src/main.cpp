@@ -4,7 +4,6 @@
 #include <DifferentialPressureSensor.h>
 #include <PWMFan.h>
 #include <PWMHeatingPad.h>
-#include <SPI.h>
 #include <TemperatureHumiditySensor.h>
 #include <Wire.h>
 #include <ThermocoupleSensor.h>
@@ -15,8 +14,7 @@ DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressur
 CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
 TemperatureHumiditySensor temperatureHumiditySensor("RoomTemperatureHumiditySensor", 0x40);
 
-constexpr int SPI_CS = 23;
-ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", SPI_CS);
+ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", 23, 19, 18);
 
 PWMFan pwmFan("PWMFan", 26,1);
 PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
