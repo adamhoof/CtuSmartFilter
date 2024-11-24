@@ -1,5 +1,6 @@
 #include "TemperatureHumiditySensor.h"
 #include <Arduino.h>
+#include <InvalidValue.h>
 
 CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const
 {
@@ -7,8 +8,8 @@ CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const
 }
 
 TemperatureHumiditySensor::TemperatureHumiditySensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"temperature", -1.0, "°C"}),
-      lastHumidityMeasurement({"humidity", -1.0, "%"})
+    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"temperature", INVALID_VALUE, "°C"}),
+      lastHumidityMeasurement({"humidity", INVALID_VALUE, "%"})
 {}
 
 void TemperatureHumiditySensor::init()
@@ -21,7 +22,7 @@ Measurement TemperatureHumiditySensor::readTemperature()
     const float temperature = htu21d.readTemperature();
     if (temperature == 999) {
         Serial.println("Error reading temperature from HTU21D.");
-        return {lastTemperatureMeasurement.name, -1, lastTemperatureMeasurement.unit};
+        return {lastTemperatureMeasurement.name, INVALID_VALUE, lastTemperatureMeasurement.unit};
     }
 
     lastTemperatureMeasurement.value = temperature;
@@ -33,7 +34,7 @@ Measurement TemperatureHumiditySensor::readHumidity()
     const float humidity = htu21d.readHumidity();
     if (humidity == 999) {
         Serial.println("Error reading humidity from HTU21D.");
-        return {lastHumidityMeasurement.name, -1, lastHumidityMeasurement.unit};
+        return {lastHumidityMeasurement.name, INVALID_VALUE, lastHumidityMeasurement.unit};
     }
 
     lastHumidityMeasurement.value = humidity;

@@ -1,5 +1,6 @@
 #include "CO2Sensor.h"
 #include <Arduino.h>
+#include <InvalidValue.h>
 
 CommunicationAttemptResult CO2Sensor::testCommunication() const
 {
@@ -7,7 +8,7 @@ CommunicationAttemptResult CO2Sensor::testCommunication() const
 }
 
 CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
-    : I2CDevice(address), OutputDevice(name), lastMeasurement({"CO2_concentration",-1, "ppm"}), isDataReady(false)
+    : I2CDevice(address), OutputDevice(name), lastMeasurement({"co2_concentration",-1, "ppm"}), isDataReady(false)
 {}
 
 void CO2Sensor::init()
@@ -43,7 +44,7 @@ Measurement CO2Sensor::readCO2Concentration()
         Serial.print("Error trying to execute getDataReadyFlag(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return {lastMeasurement.name, -1, lastMeasurement.unit};
+        return {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
     }
 
     if (!isDataReady) {
@@ -57,7 +58,7 @@ Measurement CO2Sensor::readCO2Concentration()
         Serial.print("Error trying to execute readMeasurement(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return {lastMeasurement.name, -1, lastMeasurement.unit};
+        return {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
     }
 
     lastMeasurement.value = static_cast<double>(co2);

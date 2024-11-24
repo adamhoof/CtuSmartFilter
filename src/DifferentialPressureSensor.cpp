@@ -1,6 +1,7 @@
 #include "DifferentialPressureSensor.h"
 #include <Wire.h>
 #include <Arduino.h>
+#include <InvalidValue.h>
 
 CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const
 {
@@ -8,7 +9,7 @@ CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const
 }
 
 DifferentialPressureSensor::DifferentialPressureSensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name), lastMeasurement({"pressure", -1.0, "Pa"})
+    : I2CDevice(address), OutputDevice(name), lastMeasurement({"pressure", INVALID_VALUE, "Pa"})
 {
 }
 
@@ -44,7 +45,7 @@ Measurement DifferentialPressureSensor::readDifferentialPressure()
         Serial.print("Error trying to execute readMeasurement(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return {lastMeasurement.name, -1, lastMeasurement.unit};
+        return {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
     }
 
     lastMeasurement.value = static_cast<double>(differentialPressure);
