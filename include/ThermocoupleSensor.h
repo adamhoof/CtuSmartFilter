@@ -8,7 +8,7 @@ class ThermocoupleSensor : public OutputDevice, public CommunicationTestable
 public:
     CommunicationAttemptResult testCommunication() const override;
 
-    explicit ThermocoupleSensor(const std::string& name, int8_t csPin);
+    explicit ThermocoupleSensor(const std::string& name, int8_t csPin, int8_t misoPin, int8_t sckPin);
 
     void init() override;
 
@@ -18,6 +18,8 @@ public:
 
 private:
     int8_t csPin;
+    int8_t misoPin;
+    int8_t sckPin;
     MAX6675 thermocouple;
 
     Measurement readTemperature();
