@@ -15,8 +15,8 @@ DifferentialPressureSensor differentialPressureSensor("DifferentialPressureSenso
 CO2Sensor co2Sensor("CO2Sensor", 0x62);
 TemperatureHumiditySensor temperatureHumiditySensor("TemperatureHumiditySensor", 0x40);
 
-constexpr int SPI_CS = 17;
-ThermocoupleSensor thermocoupleSensor("ThermocoupleSensor", SPI_CS);
+constexpr int SPI_CS = 23;
+ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", SPI_CS);
 
 PWMFan pwmFan("PWMFan", 26,1);
 PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
@@ -24,7 +24,6 @@ PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
 void initializeBusses()
 {
     Wire.begin();
-    SPI.begin(SCK, MISO, MOSI, SPI_CS);
     Serial.begin(9600);
 }
 
@@ -77,7 +76,7 @@ void serializeToJson(const CollectedData& collectedData) {
 void dataCollectionTask(void* parameter)
 {
     const std::vector<std::reference_wrapper<OutputDevice>> devices = {
-         differentialPressureSensor,co2Sensor,temperatureHumiditySensor};
+         differentialPressureSensor,co2Sensor,temperatureHumiditySensor, thermocoupleSensor};
 
     while (true) {
         CollectedData collectedData;
@@ -91,7 +90,7 @@ void setup()
 {
     initializeBusses();
     initializeDevices({differentialPressureSensor,co2Sensor,temperatureHumiditySensor,thermocoupleSensor, pwmFan, pwmHeatingPad});
-    runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor});
+    runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor});
 
     xTaskCreatePinnedToCore(
         dataCollectionTask,

@@ -3,7 +3,7 @@
 #include <OutputDevice.h>
 #include <max6675.h>
 
-class ThermocoupleSensor : public OutputDevice, CommunicationTestable
+class ThermocoupleSensor : public OutputDevice, public CommunicationTestable
 {
 public:
     CommunicationAttemptResult testCommunication() const override;
