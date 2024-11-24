@@ -11,9 +11,9 @@
 #include <ArduinoJson.h>
 #include <freertos/task.h>
 
-DifferentialPressureSensor differentialPressureSensor("DifferentialPressureSensor", 0x25);
-CO2Sensor co2Sensor("CO2Sensor", 0x62);
-TemperatureHumiditySensor temperatureHumiditySensor("TemperatureHumiditySensor", 0x40);
+DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
+CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
+TemperatureHumiditySensor temperatureHumiditySensor("RoomTemperatureHumiditySensor", 0x40);
 
 constexpr int SPI_CS = 23;
 ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", SPI_CS);
