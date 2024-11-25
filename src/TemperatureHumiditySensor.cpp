@@ -8,8 +8,8 @@ CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const
 }
 
 TemperatureHumiditySensor::TemperatureHumiditySensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"temperature", INVALID_VALUE, "°C"}),
-      lastHumidityMeasurement({"humidity", INVALID_VALUE, "%"})
+    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"room_temperature", INVALID_VALUE, "°C"}),
+      lastHumidityMeasurement({"room_humidity", INVALID_VALUE, "%"})
 {}
 
 void TemperatureHumiditySensor::init()

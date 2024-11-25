@@ -23,7 +23,7 @@ CommunicationAttemptResult ThermocoupleSensor::testCommunication() const
 }
 
 ThermocoupleSensor::ThermocoupleSensor(const std::string& name, const int8_t csPin, const int8_t misoPin, const int8_t sckPin)
-    : OutputDevice(name), csPin(csPin), misoPin(misoPin), sckPin(sckPin), thermocouple(sckPin, csPin, misoPin), lastMeasurement({"temperature", INVALID_VALUE, "°C"})
+    : OutputDevice(name), csPin(csPin), misoPin(misoPin), sckPin(sckPin), thermocouple(sckPin, csPin, misoPin), lastMeasurement({"filter_temperature", INVALID_VALUE, "°C"})
 {
 }
 

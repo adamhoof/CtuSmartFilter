@@ -9,7 +9,7 @@ CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const
 }
 
 DifferentialPressureSensor::DifferentialPressureSensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name), lastMeasurement({"pressure", INVALID_VALUE, "Pa"})
+    : I2CDevice(address), OutputDevice(name), lastMeasurement({"filter_differential_pressure", INVALID_VALUE, "Pa"})
 {
 }
 

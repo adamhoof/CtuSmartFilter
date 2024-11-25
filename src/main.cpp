@@ -59,10 +59,8 @@ void serializeToJson(const CollectedData& collectedData) {
     JsonDocument doc;
 
     for (const auto& deviceData : collectedData) {
-        JsonArray deviceArray = doc[deviceData.deviceName.c_str()].to<JsonArray>();
         for (const auto& measurement : deviceData.measurements) {
-            JsonObject measurementObject = deviceArray.add<JsonObject>();
-            measurementObject["name"] = measurement.name.c_str();
+            JsonObject measurementObject = doc[measurement.name.c_str()].to<JsonObject>();
             measurementObject["value"] = measurement.value;
             measurementObject["unit"] = measurement.unit.c_str();
         }
