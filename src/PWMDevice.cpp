@@ -1,9 +1,9 @@
 #include "PWMDevice.h"
 #include <algorithm>
-#include <esp32-hal-ledc.h>
+#include <esp32-hal.h>
 
-PWMDevice::PWMDevice(const uint8_t pwmPin, const uint8_t pwmChannel)
-    : pwmPin(pwmPin), pwmChannel(pwmChannel), powerLevel(0)
+PWMDevice::PWMDevice(const uint8_t pwmPin)
+    : pwmPin(pwmPin), powerLevel(0)
 {
 }
 
@@ -19,7 +19,7 @@ void PWMDevice::decreasePower(const uint8_t value) {
 
 void PWMDevice::setPower(const uint8_t value) {
     powerLevel = value;
-    ledcWrite(pwmChannel, powerLevel);
+    analogWrite(pwmPin, powerLevel);
 }
 
 uint8_t PWMDevice::getPower() const {

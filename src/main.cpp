@@ -16,8 +16,8 @@ TemperatureHumiditySensor temperatureHumiditySensor("RoomTemperatureHumiditySens
 
 ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", 23, 19, 18);
 
-PWMFan pwmFan("PWMFan", 26,1);
-PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16,2);
+PWMFan pwmFan("PWMFan", 26);
+PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16);
 
 void initializeBusses()
 {

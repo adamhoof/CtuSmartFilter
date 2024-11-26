@@ -5,7 +5,7 @@
 
 class PWMFan : public PWMDevice, public virtual InputDevice {
 public:
-    PWMFan(const std::string& name, uint8_t pwmPin, uint8_t pwmChannel);
+    PWMFan(const std::string& name, uint8_t pwmPin);
 
     void init() override;
 };
