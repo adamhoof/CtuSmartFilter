@@ -8,7 +8,11 @@
 #include <Wire.h>
 #include <ThermocoupleSensor.h>
 #include <ArduinoJson.h>
+#include <espMqttClient.h>
+#include <secrets.h>
+#include <WiFi.h>
 #include <freertos/task.h>
+#include "MqttClient.h"
 
 DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
 CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
@@ -82,6 +86,12 @@ void dataCollectionTask(void* parameter)
     }
 }
 
+void networkingTask(void* param) {
+    for (;;) {
+        mqttClient.loop();
+    }
+}
+
 void setup()
 {
     initializeBusses();
@@ -97,6 +107,25 @@ void setup()
         nullptr,
         1
     );
+
+    WiFi.persistent(false);
+    WiFi.setAutoReconnect(true);
+    WiFi.onEvent(WiFiEvent);
+
+    mqttClient.setCACert(rootCA);
+    mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+    mqttClient.onConnect(onMqttConnect);
+    mqttClient.onDisconnect(onMqttDisconnect);
+    mqttClient.onSubscribe(onMqttSubscribe);
+    mqttClient.onUnsubscribe(onMqttUnsubscribe);
+    mqttClient.onMessage(onMqttMessage);
+    mqttClient.onPublish(onMqttPublish);
+    mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    mqttClient.setCleanSession(true);
+
+    xTaskCreatePinnedToCore(TaskFunction_t(networkingTask), "mqttclienttask", 5120, nullptr, 1, nullptr, 0);
+
+    connectToWiFi();
 }
 
 void loop()
