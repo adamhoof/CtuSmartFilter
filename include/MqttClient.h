@@ -1,22 +1,14 @@
 #pragma once
-
-#include <WiFi.h>
 #include <espMqttClient.h>
 
 extern espMqttClientSecure mqttClient;
-
-extern TaskHandle_t taskHandle;
-
 extern bool reconnectMqtt;
 extern uint32_t lastReconnect;
 
-void connectToWiFi();
-void connectToMqtt();
-void WiFiEvent(WiFiEvent_t event);
+void connectMqttClient();
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(espMqttClientTypes::DisconnectReason reason);
 void onMqttSubscribe(uint16_t packetId, const espMqttClientTypes::SubscribeReturncode* codes, size_t len);
 void onMqttUnsubscribe(uint16_t packetId);
 void onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total);
 void onMqttPublish(uint16_t packetId);
-void networkingTask();
