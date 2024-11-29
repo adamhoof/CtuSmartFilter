@@ -115,7 +115,7 @@ void setup()
     });
     runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor});
 
-    xTaskCreatePinnedToCore(dataCollectionTask, "DataCollectionTask", 8192, nullptr, 1, nullptr, 1);
+    xTaskCreate(dataCollectionTask, "DataCollectionTask", 8192, nullptr, 1, nullptr);
 
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
@@ -135,7 +135,7 @@ void setup()
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    xTaskCreatePinnedToCore(keepMqttAlive, "keepMqttAlive", 5120, nullptr, 1, nullptr, 0);
+    xTaskCreate(keepMqttAlive, "keepMqttAlive", 5120, nullptr, 1, nullptr);
 }
 
 void loop()
