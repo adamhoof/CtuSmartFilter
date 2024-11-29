@@ -95,16 +95,17 @@ void dataCollectionTask(void* parameter)
     }
 }
 
-void keepMqttAlive(void* params)
+void configureMqttClient(espMqttClientSecure& mqttClient)
 {
-    while (true) {
-        vTaskDelay(pdMS_TO_TICKS(3000));
-        if (reconnectMqtt) {
-            connectMqttClient();
-            continue;
-        }
-        mqttClient.loop();
-    }
+    mqttClient.setCACert(rootCAChain);
+    mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+    mqttClient.onConnect(onMqttConnect);
+    mqttClient.onDisconnect(onMqttDisconnect);
+    mqttClient.onSubscribe(onMqttSubscribe);
+    mqttClient.onMessage(onMqttMessage);
+    mqttClient.onPublish(onMqttPublish);
+    mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    mqttClient.setCleanSession(true);
 }
 
 void setup()
@@ -115,27 +116,21 @@ void setup()
     });
     runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor});
 
-    xTaskCreate(dataCollectionTask, "DataCollectionTask", 8192, nullptr, 1, nullptr);
-
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
 
     WiFi.onEvent(wifiDisconnectedEventHandler, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     WiFi.onEvent(wifiConnectedEventHandler, ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
-    mqttClient.setCACert(rootCAChain);
-    mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
-    mqttClient.onConnect(onMqttConnect);
-    mqttClient.onDisconnect(onMqttDisconnect);
-    mqttClient.onSubscribe(onMqttSubscribe);
-    mqttClient.onMessage(onMqttMessage);
-    mqttClient.onPublish(onMqttPublish);
-    mqttClient.setServer(MQTT_HOST, MQTT_PORT);
-    mqttClient.setCleanSession(true);
+    configureMqttClient(mqttClient);
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    xTaskCreate(keepMqttAlive, "keepMqttAlive", 5120, nullptr, 1, nullptr);
+    xTaskCreate(keepMqttClientAlive, "keepMqttAlive", 5120, nullptr, 1, nullptr);
+    while (!mqttClient.connected()) {
+        delay(100);
+    }
+    xTaskCreate(dataCollectionTask, "DataCollectionTask", 8192, nullptr, 1, nullptr);
 }
 
 void loop()

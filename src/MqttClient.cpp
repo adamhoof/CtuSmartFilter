@@ -14,6 +14,19 @@ void connectMqttClient()
     reconnectMqtt = false;
 }
 
+void keepMqttClientAlive(void* params)
+{
+    while (true) {
+        if (reconnectMqtt) {
+            connectMqttClient();
+        }
+        else {
+            mqttClient.loop();
+        }
+        vTaskDelay(pdMS_TO_TICKS(3000));
+    }
+}
+
 void onMqttConnect(const bool sessionPresent)
 {
     Serial.println("Connected to MQTT.");
