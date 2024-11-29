@@ -6,7 +6,7 @@ void wifiConnectedEventHandler(const arduino_event_id_t event_id)
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    connectMqttClient();
+    reconnectMqtt = true;
 }
 
 void wifiDisconnectedEventHandler(const arduino_event_id_t event_id)
