@@ -8,9 +8,9 @@
 #include <Wire.h>
 #include <ThermocoupleSensor.h>
 #include <ArduinoJson.h>
-#include <espMqttClient.h>
 #include <secrets.h>
 #include <WiFi.h>
+#include <WiFiEventHandlers.h>
 #include <freertos/task.h>
 #include "MqttClient.h"
 
@@ -31,7 +31,7 @@ void initializeBusses()
 
 void initializeDevices(const std::vector<std::reference_wrapper<Device>>& devices)
 {
-    for (auto& device : devices) {
+    for (auto& device: devices) {
         device.get().init();
     }
 }
@@ -39,55 +39,70 @@ void initializeDevices(const std::vector<std::reference_wrapper<Device>>& device
 void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTestable>>& devices)
 {
     const auto results = CommunicationTester::testDevices(devices);
-    for (const auto& r : results) {
-        Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: ": "FAILURE: ");
+    for (const auto& r: results) {
+        Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: " : "FAILURE: ");
         Serial.println(r.message.c_str());
     }
 }
 
-struct DeviceMeasurements {
+struct DeviceMeasurements
+{
     std::string deviceName;
     std::vector<Measurement> measurements;
 };
+
 using CollectedData = std::vector<DeviceMeasurements>;
 
 void collectData(const std::vector<std::reference_wrapper<OutputDevice>>& devices, CollectedData& collectedData)
 {
-    for (const auto& device : devices) {
+    for (const auto& device: devices) {
         collectedData.push_back({device.get().getName(), device.get().performMeasurements()});
         delay(50);
     }
 }
 
-void serializeToJson(const CollectedData& collectedData) {
+void serializeToJson(const CollectedData& collectedData, char* buffer, size_t bufferSize)
+{
     JsonDocument doc;
 
-    for (const auto& deviceData : collectedData) {
-        for (const auto& measurement : deviceData.measurements) {
+    for (const auto& deviceData: collectedData) {
+        for (const auto& measurement: deviceData.measurements) {
             JsonObject measurementObject = doc[measurement.name.c_str()].to<JsonObject>();
             measurementObject["value"] = measurement.value;
             measurementObject["unit"] = measurement.unit.c_str();
         }
     }
 
-    serializeJsonPretty(doc, Serial);
+    serializeJson(doc, buffer, bufferSize);
 }
 
 void dataCollectionTask(void* parameter)
 {
     const std::vector<std::reference_wrapper<OutputDevice>> devices = {
-         differentialPressureSensor,co2Sensor,temperatureHumiditySensor, thermocoupleSensor};
+        differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor
+    };
 
+    constexpr size_t bufferSize = 1024;
+    char jsonBuffer[bufferSize];
     while (true) {
         CollectedData collectedData;
         collectData(devices, collectedData);
-        serializeToJson(collectedData);
+        serializeToJson(collectedData, jsonBuffer, bufferSize);
+
+        mqttClient.publish(DATA_TOPIC, 1, false, jsonBuffer);
+
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 
-void networkingTask(void* param) {
-    for (;;) {
+void keepMqttAlive(void* params)
+{
+    while (true) {
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        if (reconnectMqtt) {
+            connectMqttClient();
+            continue;
+        }
         mqttClient.loop();
     }
 }
@@ -95,37 +110,32 @@ void networkingTask(void* param) {
 void setup()
 {
     initializeBusses();
-    initializeDevices({differentialPressureSensor,co2Sensor,temperatureHumiditySensor,thermocoupleSensor, pwmFan, pwmHeatingPad});
+    initializeDevices({
+        differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor, pwmFan, pwmHeatingPad
+    });
     runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor});
 
-    xTaskCreatePinnedToCore(
-        dataCollectionTask,
-        "DataCollectionTask",
-        8192,
-        nullptr,
-        1,
-        nullptr,
-        1
-    );
+    xTaskCreatePinnedToCore(dataCollectionTask, "DataCollectionTask", 8192, nullptr, 1, nullptr, 1);
 
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
-    WiFi.onEvent(WiFiEvent);
 
-    mqttClient.setCACert(rootCA);
+    WiFi.onEvent(wifiDisconnectedEventHandler, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    WiFi.onEvent(wifiConnectedEventHandler, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+
+    mqttClient.setCACert(rootCAChain);
     mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
     mqttClient.onConnect(onMqttConnect);
     mqttClient.onDisconnect(onMqttDisconnect);
     mqttClient.onSubscribe(onMqttSubscribe);
-    mqttClient.onUnsubscribe(onMqttUnsubscribe);
     mqttClient.onMessage(onMqttMessage);
     mqttClient.onPublish(onMqttPublish);
     mqttClient.setServer(MQTT_HOST, MQTT_PORT);
     mqttClient.setCleanSession(true);
 
-    xTaskCreatePinnedToCore(TaskFunction_t(networkingTask), "mqttclienttask", 5120, nullptr, 1, nullptr, 0);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    connectToWiFi();
+    xTaskCreatePinnedToCore(keepMqttAlive, "keepMqttAlive", 5120, nullptr, 1, nullptr, 0);
 }
 
 void loop()
