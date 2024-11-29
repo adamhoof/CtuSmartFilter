@@ -8,7 +8,7 @@ CommunicationAttemptResult CO2Sensor::testCommunication() const
 }
 
 CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
-    : I2CDevice(address), OutputDevice(name), lastMeasurement({"room_co2_concentration",-1, "ppm"}), isDataReady(false)
+    : I2CDevice(address), OutputDevice(name), lastMeasurement({"room_co2_concentration",INVALID_VALUE, "ppm"}), isDataReady(false)
 {}
 
 void CO2Sensor::init()
