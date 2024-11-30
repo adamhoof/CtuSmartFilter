@@ -38,8 +38,7 @@ void initializeDevices(const std::vector<std::reference_wrapper<Device>>& device
 
 void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTestable>>& devices)
 {
-    const auto results = CommunicationTester::testDevices(devices);
-    for (const auto& r: results) {
+    for (const auto& r: CommunicationTester::testDevices(devices)) {
         Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: " : "FAILURE: ");
         Serial.println(r.message.c_str());
     }
