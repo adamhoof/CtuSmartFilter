@@ -8,6 +8,6 @@ using Unit = std::string;
 struct Measurement {
 
     MeasurementName name;
-    double value;
-    Unit unit;
+    double value{};
+    Unit unit{};
 };
