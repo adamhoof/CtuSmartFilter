@@ -2,16 +2,7 @@
 #include <Device.h>
 #include <string>
 #include <vector>
-
-using MeasurementName = std::string;
-using Unit = std::string;
-
-struct Measurement {
-
-    MeasurementName name;
-    double value;
-    Unit unit;
-};
+#include "Measurement.h"
 
 class OutputDevice : public Device
 {
