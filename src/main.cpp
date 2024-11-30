@@ -85,11 +85,13 @@ void dataCollectionTask(void* parameter)
     constexpr size_t bufferSize = 1024;
     char jsonBuffer[bufferSize];
     while (true) {
-        CollectedData collectedData;
-        collectData(devices, collectedData);
-        serializeToJson(collectedData, jsonBuffer, bufferSize);
+        if (mqttClient.connected()) {
+            CollectedData collectedData;
+            collectData(devices, collectedData);
+            serializeToJson(collectedData, jsonBuffer, bufferSize);
 
-        mqttClient.publish(DATA_TOPIC, 1, false, jsonBuffer);
+            mqttClient.publish(DATA_TOPIC, 1, false, jsonBuffer);
+        }
 
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
