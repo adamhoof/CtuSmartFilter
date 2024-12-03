@@ -1,20 +1,24 @@
 #pragma once
+
 #include <CommunicationTestable.h>
 #include <OutputDevice.h>
 #include <max6675.h>
+#include <vector>
+#include <string>
+#include "Measurement.h"
 
 class ThermocoupleSensor : public OutputDevice, public CommunicationTestable
 {
 public:
-    CommunicationAttemptResult testCommunication() const override;
-
     explicit ThermocoupleSensor(const std::string& name, int8_t csPin, int8_t misoPin, int8_t sckPin);
 
     void init() override;
 
+    CommunicationAttemptResult testCommunication() const override;
+
     std::vector<Measurement> performMeasurements() override;
 
-    std::vector<MeasurementName> getMeasurableValues() override;
+    Measurement getTemperatureValue() const;
 
 private:
     int8_t csPin;

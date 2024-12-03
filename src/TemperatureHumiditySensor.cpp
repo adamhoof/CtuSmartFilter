@@ -2,51 +2,76 @@
 #include <Arduino.h>
 #include <InvalidValue.h>
 
-CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const
-{
-    return performTemplateCommunicationTest(name, address);
-}
-
 TemperatureHumiditySensor::TemperatureHumiditySensor(const std::string& name, const byte address)
-    : I2CDevice(address), OutputDevice(name), lastTemperatureMeasurement({"room_temperature", INVALID_VALUE, "°C"}),
-      lastHumidityMeasurement({"room_humidity", INVALID_VALUE, "%"})
-{}
+    : I2CDevice(address),
+      OutputDevice(name),
+      lastTemperatureMeasurement({"room_temperature", INVALID_VALUE, "°C"}),
+      lastHumidityMeasurement({"room_humidity", INVALID_VALUE, "%"}) {}
 
-void TemperatureHumiditySensor::init()
-{
+void TemperatureHumiditySensor::init() {
     htu21d.begin();
 }
 
-Measurement TemperatureHumiditySensor::readTemperature()
-{
+Measurement TemperatureHumiditySensor::readTemperature() {
     const float temperature = htu21d.readTemperature();
     if (temperature == 999) {
         Serial.println("Error reading temperature from HTU21D.");
-        return {lastTemperatureMeasurement.name, INVALID_VALUE, lastTemperatureMeasurement.unit};
+
+        xSemaphoreTake(dataMutex, portMAX_DELAY);
+        Measurement copy = {lastTemperatureMeasurement.name, INVALID_VALUE, lastTemperatureMeasurement.unit};
+        xSemaphoreGive(dataMutex);
+
+        return copy;
     }
 
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
     lastTemperatureMeasurement.value = temperature;
-    return lastTemperatureMeasurement;
+    Measurement copy = lastTemperatureMeasurement;
+    xSemaphoreGive(dataMutex);
+
+    return copy;
 }
 
-Measurement TemperatureHumiditySensor::readHumidity()
-{
+Measurement TemperatureHumiditySensor::readHumidity() {
     const float humidity = htu21d.readHumidity();
     if (humidity == 999) {
         Serial.println("Error reading humidity from HTU21D.");
-        return {lastHumidityMeasurement.name, INVALID_VALUE, lastHumidityMeasurement.unit};
+
+        xSemaphoreTake(dataMutex, portMAX_DELAY);
+        Measurement copy = {lastHumidityMeasurement.name, INVALID_VALUE, lastHumidityMeasurement.unit};
+        xSemaphoreGive(dataMutex);
+
+        return copy;
     }
 
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
     lastHumidityMeasurement.value = humidity;
-    return lastHumidityMeasurement;
+    Measurement copy = lastHumidityMeasurement;
+    xSemaphoreGive(dataMutex);
+
+    return copy;
 }
 
-std::vector<Measurement> TemperatureHumiditySensor::performMeasurements()
-{
+std::vector<Measurement> TemperatureHumiditySensor::performMeasurements() {
     return {readTemperature(), readHumidity()};
 }
 
-std::vector<std::string> TemperatureHumiditySensor::getMeasurableValues()
-{
-    return {"temperature", "humidity"};
+Measurement TemperatureHumiditySensor::getTemperatureValue() const {
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
+    Measurement copy = lastTemperatureMeasurement;
+    xSemaphoreGive(dataMutex);
+
+    return copy;
+}
+
+Measurement TemperatureHumiditySensor::getHumidityValue() const {
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
+    Measurement copy = lastHumidityMeasurement;
+    xSemaphoreGive(dataMutex);
+
+    return copy;
+}
+
+CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const {
+    return performTemplateCommunicationTest(name, address);
 }

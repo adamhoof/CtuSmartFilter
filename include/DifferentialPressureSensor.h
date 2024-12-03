@@ -8,15 +8,15 @@
 class DifferentialPressureSensor : public I2CDevice, public OutputDevice, public CommunicationTestable
 {
 public:
-    CommunicationAttemptResult testCommunication() const override;
-
     DifferentialPressureSensor(const std::string& name, byte address);
+
+    void init() override;
+
+    CommunicationAttemptResult testCommunication() const override;
 
     std::vector<Measurement> performMeasurements() override;
 
-    std::vector<MeasurementName> getMeasurableValues() override;
-
-    void init() override;
+    Measurement getDifferentialPressureValue() const;
 
 private:
     SensirionI2CSdp differentialPressureSensor;

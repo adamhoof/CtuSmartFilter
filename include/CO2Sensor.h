@@ -7,20 +7,20 @@
 class CO2Sensor : public I2CDevice, public OutputDevice, public CommunicationTestable
 {
 public:
-    CommunicationAttemptResult testCommunication() const override;
-
     CO2Sensor(const std::string& name, uint8_t address);
-
-    std::vector<Measurement> performMeasurements() override;
-
-    std::vector<MeasurementName> getMeasurableValues() override;
 
     void init() override;
 
+    CommunicationAttemptResult testCommunication() const override;
+
+    std::vector<Measurement> performMeasurements() override;
+
+    Measurement getCO2Value() const;
+
 private:
     SensirionI2CScd4x scd4x;
-    Measurement lastMeasurement;
+    Measurement lastCO2Measurement;
     bool isDataReady;
 
-    Measurement readCO2Concentration();
+    Measurement measureCO2Concentration();
 };

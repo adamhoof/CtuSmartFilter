@@ -2,15 +2,9 @@
 #include <Arduino.h>
 #include <InvalidValue.h>
 
-CommunicationAttemptResult CO2Sensor::testCommunication() const
-{
-    return performTemplateCommunicationTest(name, address);
-}
-
 CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
-    : I2CDevice(address), OutputDevice(name), lastMeasurement({"room_co2_concentration",INVALID_VALUE, "ppm"}),
-      isDataReady(false)
-{}
+    : I2CDevice(address), OutputDevice(name), lastCO2Measurement({"room_co2_concentration", INVALID_VALUE, "ppm"}),
+      isDataReady(false) {}
 
 void CO2Sensor::init()
 {
@@ -33,7 +27,7 @@ void CO2Sensor::init()
     }
 }
 
-Measurement CO2Sensor::readCO2Concentration()
+Measurement CO2Sensor::measureCO2Concentration()
 {
     uint16_t co2 = 0;
     float temperature = 0.0f;
@@ -45,12 +39,20 @@ Measurement CO2Sensor::readCO2Concentration()
         Serial.print("Error trying to execute getDataReadyFlag(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
+
+        xSemaphoreTake(dataMutex, portMAX_DELAY);
+        Measurement copy = {lastCO2Measurement.name, INVALID_VALUE, lastCO2Measurement.unit};
+        xSemaphoreGive(dataMutex);
+        return copy;
     }
 
     if (!isDataReady) {
         Serial.println("Data not ready.");
-        return lastMeasurement;
+
+        xSemaphoreTake(dataMutex, portMAX_DELAY);
+        Measurement copy = lastCO2Measurement;
+        xSemaphoreGive(dataMutex);
+        return copy;
     }
 
     error = scd4x.readMeasurement(co2, temperature, humidity);
@@ -59,20 +61,35 @@ Measurement CO2Sensor::readCO2Concentration()
         Serial.print("Error trying to execute readMeasurement(): ");
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
-        return {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
+
+        xSemaphoreTake(dataMutex, portMAX_DELAY);
+        Measurement copy = {lastCO2Measurement.name, INVALID_VALUE, lastCO2Measurement.unit};
+        xSemaphoreGive(dataMutex);
+        return copy;
     }
 
-    lastMeasurement.value = static_cast<double>(co2);
-    return lastMeasurement;
-}
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
+    lastCO2Measurement.value = co2;
+    Measurement copy = lastCO2Measurement;
+    xSemaphoreGive(dataMutex);
 
+    return copy;
+}
 
 std::vector<Measurement> CO2Sensor::performMeasurements()
 {
-    return {readCO2Concentration()};
+    return {measureCO2Concentration()};
 }
 
-std::vector<std::string> CO2Sensor::getMeasurableValues()
+Measurement CO2Sensor::getCO2Value() const
 {
-    return {"CO2_concentration"};
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
+    Measurement copy = lastCO2Measurement;
+    xSemaphoreGive(dataMutex);
+    return copy;
+}
+
+CommunicationAttemptResult CO2Sensor::testCommunication() const
+{
+    return performTemplateCommunicationTest(name, address);
 }
