@@ -3,7 +3,7 @@
 
 class PWMDevice{
 public:
-    PWMDevice(uint8_t pwmPin);
+    explicit PWMDevice(uint8_t pwmPin);
 
     void increasePower(uint8_t value);
     void decreasePower(uint8_t value);
