@@ -8,4 +8,10 @@ public:
     PWMFan(const std::string& name, uint8_t pwmPin);
 
     void init() override;
+
+    void runAtIdle();
+
+    void runAtMax();
+
+    void turnOff();
 };
