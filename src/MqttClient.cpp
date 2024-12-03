@@ -1,7 +1,21 @@
-#include <espMqttClient.h>
+#include "MqttClient.h"
+#include <secrets.h>
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
 bool reconnectMqtt = false;
+
+void configureMqttClient()
+{
+    mqttClient.setCACert(rootCAChain);
+    mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+    mqttClient.onConnect(onMqttConnect);
+    mqttClient.onDisconnect(onMqttDisconnect);
+    mqttClient.onSubscribe(onMqttSubscribe);
+    mqttClient.onMessage(onMqttMessage);
+    mqttClient.onPublish(onMqttPublish);
+    mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    mqttClient.setCleanSession(true);
+}
 
 void connectMqttClient()
 {
@@ -12,19 +26,6 @@ void connectMqttClient()
         return;
     }
     reconnectMqtt = false;
-}
-
-void keepMqttClientAlive(void* params)
-{
-    while (true) {
-        if (reconnectMqtt) {
-            connectMqttClient();
-        }
-        else {
-            mqttClient.loop();
-        }
-        vTaskDelay(pdMS_TO_TICKS(3000));
-    }
 }
 
 void onMqttConnect(const bool sessionPresent)

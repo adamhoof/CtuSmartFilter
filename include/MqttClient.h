@@ -6,6 +6,7 @@ extern bool reconnectMqtt;
 extern uint32_t lastReconnect;
 
 void connectMqttClient();
+void configureMqttClient();
 
 void onMqttConnect(bool sessionPresent);
 void keepMqttClientAlive(void* params);
