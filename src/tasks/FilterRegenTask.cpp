@@ -1,5 +1,4 @@
 #include "tasks/FilterRegenTask.h"
-#include <freertos/task.h>
 
 bool isCo2LevelHigh(const CO2Sensor& co2Sensor, const uint32_t co2Threshold)
 {
@@ -9,8 +8,8 @@ bool isCo2LevelHigh(const CO2Sensor& co2Sensor, const uint32_t co2Threshold)
 
 void regulateHeatingPad(const FilterRegenTaskParams* params)
 {
-    TickType_t heatingPadDuration = pdMS_TO_TICKS(params->config.heatingPadDurationMs);
-    TickType_t startTime = xTaskGetTickCount();
+    unsigned int heatingPadDuration = pdMS_TO_TICKS(params->config.heatingPadDurationMs);
+    unsigned int startTime = xTaskGetTickCount();
     params->heatingPad.setPower(255);
 
     while (xTaskGetTickCount() - startTime < heatingPadDuration) {

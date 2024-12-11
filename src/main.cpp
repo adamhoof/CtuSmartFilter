@@ -51,6 +51,7 @@ void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTe
 
 void setup()
 {
+    Serial.begin(9600);
     initializeBusses();
     initializeDevices({
         differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor, pwmFan, pwmHeatingPad
@@ -67,25 +68,27 @@ void setup()
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    auto filterRegenTaskParams = std::make_unique<FilterRegenTaskParams>(
-        FilterRegenTaskParams{
-            .co2Sensor = co2Sensor,
-            .fan = pwmFan,
-            .thermocoupleSensor = thermocoupleSensor,
-            .heatingPad = pwmHeatingPad,
-        }
-    );
-    xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams.release(), 2, nullptr);
-
-    auto dataCollectionTaskParams = std::make_unique<MeasurementsPerformingTaskParams>(
+    auto measurementsPerformingTaskParams = std::make_unique<MeasurementsPerformingTaskParams>(
         MeasurementsPerformingTaskParams{
             .devicesToCollectMeasurementsFrom = {
                 differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor
             }
         }
     );
-    xTaskCreate(measurementsPerformingTask, "measurementsPerformingTask", 8192, dataCollectionTaskParams.release(), 1,
+    xTaskCreate(measurementsPerformingTask, "measurementsPerformingTask", 8192, measurementsPerformingTaskParams.release(), 1,
                 nullptr);
+
+    const FilterRegenTaskConfig config{};
+    auto filterRegenTaskParams = std::make_unique<FilterRegenTaskParams>(
+        FilterRegenTaskParams{
+            .co2Sensor = co2Sensor,
+            .fan = pwmFan,
+            .heatingPad = pwmHeatingPad,
+            .thermocoupleSensor = thermocoupleSensor,
+            .config = config
+        }
+    );
+    xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams.release(), 2, nullptr);
 
     auto keepMqttClientAliveTaskParams = std::make_unique<KeepMQTTClientAliveTaskParams>(
         KeepMQTTClientAliveTaskParams{

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <espMqttClient.h>
 #include "OutputDevice.h"
 
 struct MeasurementsPerformingTaskParams {

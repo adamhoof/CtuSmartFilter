@@ -1,4 +1,5 @@
 #include "OutputDevice.h"
+#include <freertos/FreeRTOS.h>
 
 OutputDevice::OutputDevice(std::string deviceName)
     : name(std::move(deviceName)), dataMutex(xSemaphoreCreateMutex()) {}

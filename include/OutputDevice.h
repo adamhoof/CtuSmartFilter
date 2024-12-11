@@ -1,5 +1,6 @@
 #pragma once
 #include <Device.h>
+#include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <string>
 #include <vector>

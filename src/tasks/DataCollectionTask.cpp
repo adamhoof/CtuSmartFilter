@@ -1,8 +1,6 @@
 #include "tasks/DataCollectionTask.h"
 #include <functional>
-#include <secrets.h>
 #include <ArduinoJson.h>
-#include <freertos/task.h>
 #include "CollectedData.h"
 
 void measurementsPerformingTask(void* parameter) {

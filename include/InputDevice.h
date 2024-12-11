@@ -5,7 +5,7 @@
 class InputDevice : public Device
 {
 public:
-    explicit InputDevice(std::string deviceName);
+    explicit InputDevice(const std::string& deviceName);
 
     ~InputDevice() override = default;
 

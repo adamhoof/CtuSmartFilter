@@ -1,5 +1,5 @@
 #include "MqttClient.h"
-#include <secrets.h>
+#include "secrets.h"
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
 bool reconnectMqtt = false;

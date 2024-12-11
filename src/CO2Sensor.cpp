@@ -1,6 +1,7 @@
 #include "CO2Sensor.h"
 #include <Arduino.h>
 #include <InvalidValue.h>
+#include <freertos/FreeRTOS.h>
 
 CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
     : I2CDevice(address), OutputDevice(name), lastCO2Measurement({"room_co2_concentration", INVALID_VALUE, "ppm"}),
