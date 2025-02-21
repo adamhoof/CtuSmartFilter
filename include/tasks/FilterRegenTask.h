@@ -5,6 +5,8 @@
 #include "PWMHeatingPad.h"
 #include "ThermocoupleSensor.h"
 
+#define DefaultFilterRegenTaskParams nullptr
+
 struct FilterRegenTaskConfig
 {
     std::vector<uint32_t> levelPeriods = {60000, 120000, 180000, 240000, 300000};
@@ -20,7 +22,7 @@ struct FilterRegenTaskParams
     PWMFan& fan;
     PWMHeatingPad& heatingPad;
     ThermocoupleSensor& thermocoupleSensor;
-    const FilterRegenTaskConfig& config;
+    FilterRegenTaskConfig* config;
 };
 
 void filterRegenTask(void* parameter);

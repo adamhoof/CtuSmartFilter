@@ -78,14 +78,13 @@ void setup()
     xTaskCreate(measurementsPerformingTask, "measurementsPerformingTask", 8192, measurementsPerformingTaskParams.release(), 1,
                 nullptr);
 
-    const FilterRegenTaskConfig config{};
     auto filterRegenTaskParams = std::make_unique<FilterRegenTaskParams>(
         FilterRegenTaskParams{
             .co2Sensor = co2Sensor,
             .fan = pwmFan,
             .heatingPad = pwmHeatingPad,
             .thermocoupleSensor = thermocoupleSensor,
-            .config = config
+            nullptr
         }
     );
     xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams.release(), 2, nullptr);
