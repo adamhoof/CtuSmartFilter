@@ -30,7 +30,7 @@ void dataPublishingTask(void* parameter)
         CollectedData collectedData;
 
         for (const auto& device: params->devicesWhoseDataToPublish) {
-            collectedData.push_back({device.get().getName(), device.get().performMeasurements()});
+            collectedData.push_back({device->getName(), device->performMeasurements()});
         }
 
         constexpr size_t bufferSize = 1024;

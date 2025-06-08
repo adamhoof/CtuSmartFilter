@@ -32,14 +32,14 @@ void initializeBusses()
     Serial.begin(9600);
 }
 
-void initializeDevices(const std::vector<std::reference_wrapper<Device>>& devices)
+void initializeDevices(const std::vector<Device*>& devices)
 {
     for (auto& device: devices) {
-        device.get().init();
+        device->init();
     }
 }
 
-void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTestable>>& devices)
+void runConnectionTests(const std::vector<CommunicationTestable*>& devices)
 {
     for (const auto& r: CommunicationTester::testDevices(devices)) {
         Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: " : "FAILURE: ");
@@ -52,9 +52,9 @@ void setup()
     Serial.begin(9600);
     initializeBusses();
     initializeDevices({
-        differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor, pwmFan, pwmHeatingPad
+        &differentialPressureSensor, &co2Sensor, &temperatureHumiditySensor, &thermocoupleSensor, &pwmFan, &pwmHeatingPad
     });
-    runConnectionTests({differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor});
+    runConnectionTests({&differentialPressureSensor, &co2Sensor, &temperatureHumiditySensor, &thermocoupleSensor});
 
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
@@ -66,41 +66,39 @@ void setup()
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    auto measurementsPerformingTaskParams = std::make_unique<MeasurementsPerformingTaskParams>(
-        MeasurementsPerformingTaskParams{
+    auto measurementsPerformingTaskParams = new MeasurementsPerformingTaskParams{
             .devicesToCollectMeasurementsFrom = {
-                differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor
+                differentialPressureSensor, 
+                co2Sensor,
+                temperatureHumiditySensor,
+                thermocoupleSensor
             }
-        }
-    );
-    xTaskCreate(measurementsPerformingTask, "measurementsPerformingTask", 8192, measurementsPerformingTaskParams.release(), 1,
-                nullptr);
+};
 
-    auto filterRegenTaskParams = std::make_unique<FilterRegenTaskParams>(
-        FilterRegenTaskParams{
+    xTaskCreate(measurementsPerformingTask, "measurementsPerformingTask", 8192, measurementsPerformingTaskParams, 1, nullptr);
+
+    auto filterRegenTaskParams = new FilterRegenTaskParams{
             .co2Sensor = co2Sensor,
             .fan = pwmFan,
             .heatingPad = pwmHeatingPad,
             .thermocoupleSensor = thermocoupleSensor,
             nullptr
-        }
-    );
-    xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams.release(), 2, nullptr);
+        };
+    xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams, 2, nullptr);
 
     auto keepConnectionsAliveTaskParams = new KeepConnectionsAliveTaskParams{
             .mqttClient = mqttClient,
         };
         xTaskCreate(keepConnectionsAlive, "keepConnectionsAlive", 10000, keepConnectionsAliveTaskParams, 1, nullptr);
 
-    auto dataPublishingTaskParams = std::make_unique<DataPublishingTaskParams>(
-        DataPublishingTaskParams{
+    auto dataPublishingTaskParams = new DataPublishingTaskParams{
             .mqttClient = mqttClient,
             .devicesWhoseDataToPublish = {
-                differentialPressureSensor, co2Sensor, temperatureHumiditySensor, thermocoupleSensor
+                &differentialPressureSensor, &co2Sensor, &temperatureHumiditySensor, &thermocoupleSensor
             }
-        }
-    );
-    xTaskCreate(dataPublishingTask, "dataPublishingTask", 8192, dataPublishingTaskParams.release(), 1, nullptr);
+        };
+
+    xTaskCreate(dataPublishingTask, "dataPublishingTask", 8192, dataPublishingTaskParams, 1, nullptr);
 }
 
 void loop()

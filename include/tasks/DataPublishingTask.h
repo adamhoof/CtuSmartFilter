@@ -1,14 +1,14 @@
 #pragma once
 #include <vector>
 
-#include "MqttClient.h"
+#include "MqttClientWrapper.h"
 
 class OutputDevice;
 
 struct DataPublishingTaskParams
 {
     espMqttClientSecure& mqttClient;
-    std::vector<std::reference_wrapper<OutputDevice>> devicesWhoseDataToPublish;
+    std::vector<OutputDevice*> devicesWhoseDataToPublish;
 };
 
 void dataPublishingTask(void* parameter);
