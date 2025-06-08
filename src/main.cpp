@@ -14,8 +14,8 @@
 #include <tasks/DataCollectionTask.h>
 #include <tasks/DataPublishingTask.h>
 #include <tasks/FilterRegenTask.h>
-#include <tasks/KeepMQTTClientAliveTask.h>
-#include "MqttClient.h"
+#include <tasks/KeepConnectionsAliveTask.h>
+#include "MqttClientWrapper.h"
 
 DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
 CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
@@ -46,8 +46,6 @@ void runConnectionTests(const std::vector<std::reference_wrapper<CommunicationTe
         Serial.println(r.message.c_str());
     }
 }
-
-
 
 void setup()
 {
@@ -89,14 +87,10 @@ void setup()
     );
     xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams.release(), 2, nullptr);
 
-    auto keepMqttClientAliveTaskParams = std::make_unique<KeepMQTTClientAliveTaskParams>(
-        KeepMQTTClientAliveTaskParams{
+    auto keepConnectionsAliveTaskParams = new KeepConnectionsAliveTaskParams{
             .mqttClient = mqttClient,
-        });
-    xTaskCreate(keepMqttClientAlive, "keepMqttClientAlive", 5120, keepMqttClientAliveTaskParams.release(), 1, nullptr);
-    while (!mqttClient.connected()) {
-        delay(100);
-    }
+        };
+        xTaskCreate(keepConnectionsAlive, "keepConnectionsAlive", 10000, keepConnectionsAliveTaskParams, 1, nullptr);
 
     auto dataPublishingTaskParams = std::make_unique<DataPublishingTaskParams>(
         DataPublishingTaskParams{

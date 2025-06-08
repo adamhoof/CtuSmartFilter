@@ -1,9 +1,9 @@
 #pragma once
 #include <espMqttClient.h>
 
-struct KeepMQTTClientAliveTaskParams
+struct KeepConnectionsAliveTaskParams
 {
   espMqttClientSecure& mqttClient;
 };
 
-void keepMqttClientAlive(void* params);
+void keepConnectionsAlive(void* params);
