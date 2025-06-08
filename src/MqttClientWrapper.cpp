@@ -16,6 +16,7 @@ void configureMqttClient()
     mqttClient.setServer(MQTT_HOST, MQTT_PORT);
     mqttClient.setClientId(MQTT_CLIENT_ID);
     mqttClient.setCleanSession(true);
+    mqttClient.setKeepAlive(15);
 }
 
 void connectMqttClientBlocking()
