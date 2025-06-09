@@ -2,7 +2,7 @@
 
 #include <CommunicationTestable.h>
 #include <OutputDevice.h>
-#include <max6675.h>
+#include <MAX6675.h>
 #include <vector>
 #include <string>
 #include "Measurement.h"
@@ -10,7 +10,7 @@
 class ThermocoupleSensor : public OutputDevice, public CommunicationTestable
 {
 public:
-    explicit ThermocoupleSensor(const std::string& name, int8_t csPin, int8_t misoPin, int8_t sckPin);
+    explicit ThermocoupleSensor(const std::string& name, int8_t csPin);
 
     void init() override;
 
@@ -21,9 +21,6 @@ public:
     Measurement getTemperatureValue() const;
 
 private:
-    int8_t csPin;
-    int8_t misoPin;
-    int8_t sckPin;
     MAX6675 thermocouple;
 
     Measurement readTemperature();

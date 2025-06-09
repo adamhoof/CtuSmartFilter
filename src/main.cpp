@@ -21,7 +21,8 @@ DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressur
 CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
 TemperatureHumiditySensor temperatureHumiditySensor("RoomTemperatureHumiditySensor", 0x40);
 
-ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", 23, 19, 18);
+constexpr int8_t csPin = 23, sckPin = 18, misoPin = 19, mosiPin = 17;
+ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", csPin);
 
 PWMFan pwmFan("PWMFan", 26);
 PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16);
@@ -30,6 +31,8 @@ void initializeBusses()
 {
     Wire.begin();
     Serial.begin(9600);
+    // MAX6675 is output only, no mosi needed
+    SPI.begin(sckPin, misoPin);
 }
 
 void initializeDevices(const std::vector<Device*>& devices)
@@ -49,7 +52,8 @@ void runConnectionTests(const std::vector<CommunicationTestable*>& devices)
 
 void setup()
 {
-    Serial.begin(9600);
+    // avoid dangling mosi pin state when disconnected
+    pinMode(misoPin, INPUT_PULLUP);
     initializeBusses();
     initializeDevices({
         &differentialPressureSensor, &co2Sensor, &temperatureHumiditySensor, &thermocoupleSensor, &pwmFan, &pwmHeatingPad

@@ -1,40 +1,42 @@
 #include "ThermocoupleSensor.h"
 #include <SPI.h>
 #include <Arduino.h>
+#include <sys/stat.h>
 #include "InvalidValue.h"
 
-ThermocoupleSensor::ThermocoupleSensor(const std::string& name, const int8_t csPin, const int8_t misoPin,
-                                       const int8_t sckPin)
+ThermocoupleSensor::ThermocoupleSensor(const std::string& name, const int8_t csPin)
     : OutputDevice(name),
-      csPin(csPin),
-      misoPin(misoPin),
-      sckPin(sckPin),
-      thermocouple(sckPin, csPin, misoPin),
+      thermocouple(csPin, &SPI),
       lastMeasurement({"filter_temperature", INVALID_VALUE, "°C"})
 {
 }
 
 void ThermocoupleSensor::init()
 {
-    pinMode(csPin, OUTPUT);
-    digitalWrite(csPin, HIGH);
-    delay(100);
+    thermocouple.begin();
     Serial.println("ThermocoupleSensor initialized.");
 }
 
 Measurement ThermocoupleSensor::readTemperature()
 {
-    const double temperature = thermocouple.readCelsius();
+    const uint8_t status = thermocouple.read();
 
-    if (isnan(temperature) || temperature < -100.0) {
-        Serial.println("Error reading temperature from MAX6675.");
-
+    if (status != STATUS_OK) {
+        if (status == STATUS_ERROR) {
+            Serial.println("Error: Thermocouple is open-circuit or disconnected.");
+        }
+        else if (status == STATUS_NO_COMMUNICATION) {
+            Serial.println("Error: No communication with MAX6675 chip.");
+        } else {
+            Serial.println("Error: Unknown error.");
+        }
         xSemaphoreTake(dataMutex, portMAX_DELAY);
         Measurement copy = {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
         xSemaphoreGive(dataMutex);
-
         return copy;
     }
+
+    const double temperature = thermocouple.getCelsius();
 
     xSemaphoreTake(dataMutex, portMAX_DELAY);
     lastMeasurement.value = temperature;
@@ -60,19 +62,33 @@ Measurement ThermocoupleSensor::getTemperatureValue() const
 
 CommunicationAttemptResult ThermocoupleSensor::testCommunication()
 {
-    Serial.println("ThermocoupleSensor test");
+    const uint8_t status = thermocouple.read();
+    const uint16_t rawData = thermocouple.getRawData();
 
-    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(csPin, LOW);
+    const std::string messagePrefix = "Device '" + this->name + "': ";
 
-    uint8_t response = SPI.transfer(0x00);
-
-    digitalWrite(csPin, HIGH);
-    SPI.endTransaction();
-
-    if (response == 0 || response == 0xFF) {
-        return {FAILURE, "ThermocoupleSensor: No response or invalid data from SPI device"};
-    } else {
-        return {SUCCESS, "ThermocoupleSensor: Device responded correctly via SPI"};
+    if (rawData == 0x0000) {
+        const std::string detail = "No response, MISO line is floating or stuck LOW.";
+        return {FAILURE, messagePrefix + detail};
     }
+
+    if (status != STATUS_OK) {
+        std::string detail;
+
+        switch (status) {
+            case STATUS_NO_COMMUNICATION:
+                detail = "No response, MISO line may be stuck HIGH (check power/CS pin).";
+                break;
+            case STATUS_ERROR:
+                detail = "Responded correctly but reports an open circuit (check probe connection).";
+                break;
+            default:
+                detail = "Reported an unknown error.";
+                break;
+        }
+        return {FAILURE, messagePrefix + detail};
+    }
+
+    const std::string successDetail = "Responded correctly with a valid reading.";
+    return {SUCCESS, messagePrefix + successDetail};
 }
