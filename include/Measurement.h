@@ -1,13 +1,7 @@
 #pragma once
 
-using std::string;
-
-using MeasurementName = std::string;
-using Unit = std::string;
-
 struct Measurement {
-
-    MeasurementName name;
+    const char* name{};
     double value{};
-    Unit unit{};
+    const char* unit{};
 };

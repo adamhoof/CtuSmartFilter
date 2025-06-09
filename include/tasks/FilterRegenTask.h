@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CO2Sensor.h>
+#include <vector>
 #include "PWMFan.h"
 #include "PWMHeatingPad.h"
 #include "ThermocoupleSensor.h"

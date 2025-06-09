@@ -4,12 +4,9 @@
 #include <sys/stat.h>
 #include "InvalidValue.h"
 
-ThermocoupleSensor::ThermocoupleSensor(const std::string& name, const int8_t csPin)
-    : OutputDevice(name),
-      thermocouple(csPin, &SPI),
-      lastMeasurement({"filter_temperature", INVALID_VALUE, "°C"})
-{
-}
+ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin)
+    : SensorDevice(name, "filter_temperature", "°C"),
+      thermocouple(csPin, &SPI){}
 
 void ThermocoupleSensor::init()
 {
@@ -30,65 +27,40 @@ Measurement ThermocoupleSensor::readTemperature()
         } else {
             Serial.println("Error: Unknown error.");
         }
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
-        xSemaphoreGive(dataMutex);
-        return copy;
+        return newMeasurement(INVALID_VALUE);
     }
 
     const double temperature = thermocouple.getCelsius();
 
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    lastMeasurement.value = temperature;
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
+    return newMeasurement(temperature);
 }
 
-std::vector<Measurement> ThermocoupleSensor::performMeasurements()
+Measurement ThermocoupleSensor::performMeasurement()
 {
     return {readTemperature()};
 }
 
-Measurement ThermocoupleSensor::getTemperatureValue() const
-{
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
-}
-
-CommunicationAttemptResult ThermocoupleSensor::testCommunication()
-{
+CommunicationAttemptResult ThermocoupleSensor::testCommunication() {
+    static char messageBuffer[128];
     const uint8_t status = thermocouple.read();
     const uint16_t rawData = thermocouple.getRawData();
-
-    const std::string messagePrefix = "Device '" + this->name + "': ";
+    const char* errorDetail = nullptr;
 
     if (rawData == 0x0000) {
-        const std::string detail = "No response, MISO line is floating or stuck LOW.";
-        return {FAILURE, messagePrefix + detail};
+        errorDetail = "No response, MISO line is floating or stuck LOW.";
+    } else if (status == STATUS_NO_COMMUNICATION) {
+        errorDetail = "No response, MISO line may be stuck HIGH (check power/CS pin).";
+    } else if (status == STATUS_ERROR) {
+        errorDetail = "Responded correctly but reports an open circuit (check probe).";
     }
 
-    if (status != STATUS_OK) {
-        std::string detail;
-
-        switch (status) {
-            case STATUS_NO_COMMUNICATION:
-                detail = "No response, MISO line may be stuck HIGH (check power/CS pin).";
-                break;
-            case STATUS_ERROR:
-                detail = "Responded correctly but reports an open circuit (check probe connection).";
-                break;
-            default:
-                detail = "Reported an unknown error.";
-                break;
-        }
-        return {FAILURE, messagePrefix + detail};
+    if (errorDetail != nullptr) {
+        snprintf(messageBuffer, sizeof(messageBuffer), "Device '%s': %s",
+                 getName(), errorDetail);
+        return {FAILURE, messageBuffer};
     }
 
-    const std::string successDetail = "Responded correctly with a valid reading.";
-    return {SUCCESS, messagePrefix + successDetail};
+    snprintf(messageBuffer, sizeof(messageBuffer),
+             "Device '%s': Responded correctly with a valid reading.", getName());
+    return {SUCCESS, messageBuffer};
 }

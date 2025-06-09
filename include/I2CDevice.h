@@ -11,7 +11,7 @@ public:
 
     virtual byte getAddress() const;
 
-    CommunicationAttemptResult performTemplateCommunicationTest(const std::string& name, byte address) const;
+    CommunicationAttemptResult performTemplateCommunicationTest(const char* name, byte address) const;
 
 protected:
     byte address;

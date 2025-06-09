@@ -12,21 +12,23 @@ byte I2CDevice::getAddress() const
     return address;
 }
 
-CommunicationAttemptResult I2CDevice::performTemplateCommunicationTest(const std::string& name, const byte address) const
-{
+CommunicationAttemptResult I2CDevice::performTemplateCommunicationTest(
+    const char* name, const byte address) const {
+
     Wire.beginTransmission(address);
     delay(5);
     const byte error = Wire.endTransmission();
 
+    static char messageBuffer[96];
+    const char* format;
+
     if (error == 0) {
-        return {
-            SUCCESS, "Device '" + name + "' is responding at address 0x" +
-                     String(address, HEX).c_str()
-        };
+        format = "Device '%s' is responding at address 0x%02X";
+        snprintf(messageBuffer, sizeof(messageBuffer), format, name, address);
+        return {SUCCESS, messageBuffer};
     }
 
-    return {
-        FAILURE, "Device '" + name + "' is not responding at address 0x" +
-                 String(address, HEX).c_str()
-    };
+    format = "Device '%s' is not responding at address 0x%02X";
+    snprintf(messageBuffer, sizeof(messageBuffer), format, name, address);
+    return {FAILURE, messageBuffer};
 }

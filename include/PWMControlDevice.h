@@ -1,9 +1,11 @@
 #pragma once
 #include <cstdint>
 
-class PWMDevice{
+#include "Device.h"
+
+class PWMControlDevice : public Device{
 public:
-    explicit PWMDevice(uint8_t pwmPin);
+    explicit PWMControlDevice(const char* name, uint8_t pwmPin);
 
     void increasePower(uint8_t value);
     void decreasePower(uint8_t value);

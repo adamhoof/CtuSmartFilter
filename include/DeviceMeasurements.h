@@ -5,5 +5,5 @@
 
 struct DeviceMeasurements {
     std::string deviceName;
-    std::vector<Measurement> measurements;
+    std::vector<Measurement> measurement;
 };

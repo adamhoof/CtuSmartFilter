@@ -1,9 +1,9 @@
 #pragma once
-
-#include "OutputDevice.h"
+#include "SensorDevice.h"
+#include <vector>
 
 struct MeasurementsPerformingTaskParams {
-  std::vector<std::reference_wrapper<OutputDevice>> devicesToCollectMeasurementsFrom;
+  std::vector<SensorDevice*> sensorsToCollectMeasurementsFrom;
 };
 
 void measurementsPerformingTask(void* parameter);

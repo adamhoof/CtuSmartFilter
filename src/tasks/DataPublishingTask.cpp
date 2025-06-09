@@ -2,7 +2,7 @@
 
 #include "CollectedData.h"
 #include <ArduinoJson.h>
-#include <OutputDevice.h>
+#include <SensorDevice.h>
 #include <secrets.h>
 
 namespace

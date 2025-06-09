@@ -3,12 +3,12 @@
 #include <Arduino.h>
 #include <InvalidValue.h>
 
-DifferentialPressureSensor::DifferentialPressureSensor(const std::string& name, const uint8_t address)
+DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address)
     : I2CDevice(address),
-      OutputDevice(name),
-      lastMeasurement({"filter_differential_pressure", INVALID_VALUE, "Pa"}) {}
+      SensorDevice(name, "filter_differential_pressure", "Pa"){}
 
-void DifferentialPressureSensor::init() {
+void DifferentialPressureSensor::init()
+{
     differentialPressureSensor.begin(Wire, address);
 
     char errorMessage[256];
@@ -28,7 +28,8 @@ void DifferentialPressureSensor::init() {
     }
 }
 
-Measurement DifferentialPressureSensor::readDifferentialPressure() {
+Measurement DifferentialPressureSensor::readDifferentialPressure()
+{
     float differentialPressure = 0.0f;
     float temperature = 0.0f;
 
@@ -39,33 +40,18 @@ Measurement DifferentialPressureSensor::readDifferentialPressure() {
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
 
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
-        xSemaphoreGive(dataMutex);
-
-        return copy;
+        return newMeasurement(INVALID_VALUE);
     }
 
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    lastMeasurement.value = static_cast<double>(differentialPressure);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
+    return newMeasurement(differentialPressure);
 }
 
-std::vector<Measurement> DifferentialPressureSensor::performMeasurements() {
+Measurement DifferentialPressureSensor::performMeasurement()
+{
     return {readDifferentialPressure()};
 }
 
-Measurement DifferentialPressureSensor::getDifferentialPressureValue() const {
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
-}
-
-CommunicationAttemptResult DifferentialPressureSensor::testCommunication() {
-    return performTemplateCommunicationTest(name, address);
+CommunicationAttemptResult DifferentialPressureSensor::testCommunication()
+{
+    return performTemplateCommunicationTest(getName(), address);
 }
