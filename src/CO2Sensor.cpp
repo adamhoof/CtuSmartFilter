@@ -90,7 +90,7 @@ Measurement CO2Sensor::getCO2Value() const
     return copy;
 }
 
-CommunicationAttemptResult CO2Sensor::testCommunication() const
+CommunicationAttemptResult CO2Sensor::testCommunication()
 {
     return performTemplateCommunicationTest(name, address);
 }

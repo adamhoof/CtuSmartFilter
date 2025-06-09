@@ -58,7 +58,7 @@ Measurement ThermocoupleSensor::getTemperatureValue() const
     return copy;
 }
 
-CommunicationAttemptResult ThermocoupleSensor::testCommunication() const
+CommunicationAttemptResult ThermocoupleSensor::testCommunication()
 {
     Serial.println("ThermocoupleSensor test");
 

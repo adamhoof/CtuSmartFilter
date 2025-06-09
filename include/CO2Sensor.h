@@ -11,7 +11,7 @@ public:
 
     void init() override;
 
-    CommunicationAttemptResult testCommunication() const override;
+    CommunicationAttemptResult testCommunication() override;
 
     std::vector<Measurement> performMeasurements() override;
 

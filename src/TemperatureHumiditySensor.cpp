@@ -72,6 +72,6 @@ Measurement TemperatureHumiditySensor::getHumidityValue() const {
     return copy;
 }
 
-CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() const {
+CommunicationAttemptResult TemperatureHumiditySensor::testCommunication() {
     return performTemplateCommunicationTest(name, address);
 }

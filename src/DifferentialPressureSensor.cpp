@@ -66,6 +66,6 @@ Measurement DifferentialPressureSensor::getDifferentialPressureValue() const {
     return copy;
 }
 
-CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const {
+CommunicationAttemptResult DifferentialPressureSensor::testCommunication() {
     return performTemplateCommunicationTest(name, address);
 }
