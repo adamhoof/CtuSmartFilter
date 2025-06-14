@@ -7,9 +7,9 @@ class PWMControlDevice : public Device{
 public:
     explicit PWMControlDevice(const char* name, uint8_t pwmPin);
 
-    void increasePower(uint8_t value);
-    void decreasePower(uint8_t value);
-    void setPower(uint8_t value);
+    void increasePower(uint8_t byPercent);
+    void decreasePower(uint8_t byPercent);
+    void setPower(uint8_t percent);
     uint8_t getPower() const;
 
 protected:
