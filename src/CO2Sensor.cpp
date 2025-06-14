@@ -18,6 +18,7 @@ void CO2Sensor::init()
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
     }
+    delay(20);
 
     error = scd4x.startPeriodicMeasurement();
     if (error) {

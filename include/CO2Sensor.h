@@ -15,8 +15,6 @@ public:
 
     Measurement performMeasurement() override;
 
-    Measurement getCO2Value() const;
-
 private:
     SensirionI2CScd4x scd4x;
     double lastValue;
