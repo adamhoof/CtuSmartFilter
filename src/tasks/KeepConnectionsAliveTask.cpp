@@ -11,11 +11,11 @@ void keepConnectionsAlive(void* param)
     auto* params = static_cast<KeepConnectionsAliveTaskParams*>(param);
 
     while (true) {
-        // loop() does nothing if _state is disconnected, but is crucial in any other phase (see switch inside the loop())
-        // it needs to be called before the WiFi check to correctly detect MQTT client disconnection after WiFi is disconnected
         if (wifiDisconnectCount >= MAX_WIFI_DISCONNECTS) {
             ESP.restart();
         }
+        // loop() does nothing if _state is disconnected, but is crucial in any other phase (see switch inside the loop())
+        // it needs to be called before the WiFi.connected() check to correctly detect MQTT client disconnection in the WiFi is disconnected
         params->mqttClient.loop();
         if (WiFi.isConnected()) {
             // connect() does nothing in every _state other than disconnected, safe to call multiple times in a row even if currently connecting
