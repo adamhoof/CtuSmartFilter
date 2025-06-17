@@ -3,12 +3,12 @@
 #include <Arduino.h>
 #include <InvalidValue.h>
 
-DifferentialPressureSensor::DifferentialPressureSensor(const std::string& name, const uint8_t address)
+DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address)
     : I2CDevice(address),
-      OutputDevice(name),
-      lastMeasurement({"filter_differential_pressure", INVALID_VALUE, "Pa"}) {}
+      SensorDevice(name, "filter_differential_pressure", "Pa"){}
 
-void DifferentialPressureSensor::init() {
+void DifferentialPressureSensor::init()
+{
     differentialPressureSensor.begin(Wire, address);
 
     char errorMessage[256];
@@ -33,39 +33,22 @@ Measurement DifferentialPressureSensor::readDifferentialPressure() {
     float temperature = 0.0f;
 
     const uint16_t error = differentialPressureSensor.readMeasurement(differentialPressure, temperature);
+
     if (error) {
-        char errorMessage[256];
-        Serial.print("Error trying to execute readMeasurement(): ");
-        errorToString(error, errorMessage, 256);
-        Serial.println(errorMessage);
-
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
-        xSemaphoreGive(dataMutex);
-
-        return copy;
+        char errorMessageBuffer[256];
+        errorToString(error, errorMessageBuffer, sizeof(errorMessageBuffer));
+        Serial.printf("%s: %s\n", getName(), errorMessageBuffer);
+        return newInvalidMeasurement(errorMessageBuffer);
     }
-
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    lastMeasurement.value = static_cast<double>(differentialPressure);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
+    return newValidMeasurement(differentialPressure);
 }
 
-std::vector<Measurement> DifferentialPressureSensor::performMeasurements() {
-    return {readDifferentialPressure()};
+Measurement DifferentialPressureSensor::performMeasurement()
+{
+    return readDifferentialPressure();
 }
 
-Measurement DifferentialPressureSensor::getDifferentialPressureValue() const {
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
-}
-
-CommunicationAttemptResult DifferentialPressureSensor::testCommunication() const {
-    return performTemplateCommunicationTest(name, address);
+CommunicationAttemptResult DifferentialPressureSensor::testCommunication()
+{
+    return performTemplateCommunicationTest(getName(), address);
 }

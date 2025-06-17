@@ -1,13 +1,16 @@
 #pragma once
 
 #include <CO2Sensor.h>
+#include <vector>
 #include "PWMFan.h"
 #include "PWMHeatingPad.h"
 #include "ThermocoupleSensor.h"
 
+#define DefaultFilterRegenTaskParams nullptr
+
 struct FilterRegenTaskConfig
 {
-    std::vector<uint32_t> levelPeriods = {60000, 120000, 180000, 240000, 300000};
+    std::array<uint32_t, 5> levelPeriods = {60000, 120000, 180000, 240000, 300000};
     uint8_t currentLevel = 2;
     int co2Threshold = 1000;
     uint8_t heatingPadTargetTemp = 100;
@@ -20,7 +23,7 @@ struct FilterRegenTaskParams
     PWMFan& fan;
     PWMHeatingPad& heatingPad;
     ThermocoupleSensor& thermocoupleSensor;
-    const FilterRegenTaskConfig& config;
+    FilterRegenTaskConfig* config;
 };
 
 void filterRegenTask(void* parameter);

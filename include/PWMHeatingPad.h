@@ -1,11 +1,10 @@
 #pragma once
-#include <InputDevice.h>
-#include <PWMDevice.h>
+#include <PWMControlDevice.h>
 
-class PWMHeatingPad : public PWMDevice, public virtual InputDevice
+class PWMHeatingPad : public PWMControlDevice
 {
 public:
-    PWMHeatingPad(const std::string& name, int8_t pwmPin);
+    PWMHeatingPad(const char* name, int8_t pwmPin);
 
     void init() override;
 

@@ -1,10 +1,12 @@
 #pragma once
+#include "SensorDevice.h"
+#include <vector>
 
-#include <espMqttClient.h>
-#include "OutputDevice.h"
+#include "SensorDataBank.h"
 
 struct MeasurementsPerformingTaskParams {
-  std::vector<std::reference_wrapper<OutputDevice>> devicesToCollectMeasurementsFrom;
+  std::vector<SensorDevice*> sensorsToCollectMeasurementsFrom;
+  SensorDataBank& sensorDataBank;
 };
 
-void measurementsPerformingTask(void* parameter);
+void dataCollectionTask(void* parameter);

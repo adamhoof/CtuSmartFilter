@@ -1,8 +1,8 @@
-#include "MqttClient.h"
-#include <secrets.h>
+#include "MqttClientWrapper.h"
+#include "secrets.h"
+#include "tasks/KeepConnectionsAliveTask.h"
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
-bool reconnectMqtt = false;
 
 void configureMqttClient()
 {
@@ -14,31 +14,29 @@ void configureMqttClient()
     mqttClient.onMessage(onMqttMessage);
     mqttClient.onPublish(onMqttPublish);
     mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    mqttClient.setClientId(MQTT_CLIENT_ID);
     mqttClient.setCleanSession(true);
+    mqttClient.setKeepAlive(15);
 }
 
-void connectMqttClient()
+void connectMqttClientBlocking()
 {
-    Serial.println("Connecting to MQTT...");
-    if (!mqttClient.connect()) {
-        reconnectMqtt = true;
-        Serial.println("Connecting failed.");
-        return;
+    Serial.println("Connecting to MQTT broker...");
+    mqttClient.connect();
+    while (!mqttClient.connected()) {
+        Serial.print(".");
+        delay(300);
     }
-    reconnectMqtt = false;
 }
 
 void onMqttConnect(const bool sessionPresent)
 {
-    Serial.println("Connected to MQTT.");
-    Serial.print("Session present: ");
-    Serial.println(sessionPresent);
+    Serial.printf("Connected to MQTT broker with client ID %s\n", mqttClient.getClientId());
 }
 
 void onMqttDisconnect(espMqttClientTypes::DisconnectReason reason)
 {
     Serial.printf("Disconnected from MQTT: %u.\n", static_cast<uint8_t>(reason));
-    reconnectMqtt = true;
 }
 
 void onMqttSubscribe(const uint16_t packetId, const espMqttClientTypes::SubscribeReturncode* codes, const size_t len)

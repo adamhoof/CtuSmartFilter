@@ -1,43 +1,42 @@
 #include "tasks/DataPublishingTask.h"
-
-#include "CollectedData.h"
 #include <ArduinoJson.h>
-#include <OutputDevice.h>
-#include <secrets.h>
 
-namespace
-{
-    void serializeToJson(const CollectedData& collectedData, char* buffer, const size_t bufferSize)
-    {
-        JsonDocument doc;
+#include "secrets.h"
 
-        for (const auto& deviceData: collectedData) {
-            for (const auto& measurement: deviceData.measurements) {
-                JsonObject measurementObject = doc[measurement.name.c_str()].to<JsonObject>();
-                measurementObject["value"] = measurement.value;
-                measurementObject["unit"] = measurement.unit.c_str();
-            }
-        }
-        serializeJson(doc, buffer, bufferSize);
-    }
-}
-
-void dataPublishingTask(void* parameter)
-{
+void dataPublishingTask(void* parameter) {
     const auto* params = static_cast<DataPublishingTaskParams*>(parameter);
 
-    while (true) {
-        CollectedData collectedData;
+    static StaticJsonDocument<1024> jsonDoc;
+    static char jsonOutputBuffer[1024];
 
-        for (const auto& device: params->devicesWhoseDataToPublish) {
-            collectedData.push_back({device.get().getName(), device.get().performMeasurements()});
+    while (true) {
+        jsonDoc.clear();
+
+        for (const auto& sensor : params->devicesWhoseDataToPublish) {
+            Measurement m = params->sensorDataBank.getMeasurement(sensor->getName());
+
+            if (m.name == nullptr) {
+                continue;
+            }
+
+            JsonObject measurementObject = jsonDoc[m.name].to<JsonObject>();
+
+            if (strcmp(m.statusMessage.data(), "OK") == 0) {
+                measurementObject["value"] = m.value;
+            }
+            measurementObject["status"] = m.statusMessage.data();
+
+            Serial.printf("Name: %s, Value: %f, Unit: %s, Status: %s\n", m.name, m.value, m.unit, m.statusMessage.data());
         }
 
-        constexpr size_t bufferSize = 1024;
-        char jsonBuffer[bufferSize];
-        serializeToJson(collectedData, jsonBuffer, bufferSize);
+        if (jsonDoc.overflowed()) {
+            Serial.println("FATAL: JSON document has overflown increase StaticJsonDocument size.");
+        }
 
-        params->mqttClient.publish(DATA_TOPIC, 1, false, jsonBuffer);
+        serializeJson(jsonDoc, jsonOutputBuffer, sizeof(jsonOutputBuffer));
+
+        params->mqttClient.publish(DATA_TOPIC, 1, false, jsonOutputBuffer);
+
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }

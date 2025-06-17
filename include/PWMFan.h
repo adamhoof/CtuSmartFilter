@@ -1,11 +1,10 @@
 #pragma once
-#include <InputDevice.h>
 
-#include "PWMDevice.h"
+#include "PWMControlDevice.h"
 
-class PWMFan : public PWMDevice, public virtual InputDevice {
+class PWMFan : public PWMControlDevice {
 public:
-    PWMFan(const std::string& name, uint8_t pwmPin);
+    explicit PWMFan(const char* name, uint8_t pwmPin);
 
     void init() override;
 

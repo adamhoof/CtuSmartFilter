@@ -11,5 +11,5 @@ struct CommunicationAttemptResult {
 class CommunicationTestable {
 public:
     virtual ~CommunicationTestable() = default;
-    virtual CommunicationAttemptResult testCommunication() const = 0;
+    virtual CommunicationAttemptResult testCommunication() = 0;
 };

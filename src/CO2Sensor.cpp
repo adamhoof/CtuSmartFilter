@@ -1,10 +1,11 @@
 #include "CO2Sensor.h"
 #include <Arduino.h>
-#include <InvalidValue.h>
+#include <freertos/FreeRTOS.h>
 
-CO2Sensor::CO2Sensor(const std::string& name, const uint8_t address)
-    : I2CDevice(address), OutputDevice(name), lastCO2Measurement({"room_co2_concentration", INVALID_VALUE, "ppm"}),
-      isDataReady(false) {}
+CO2Sensor::CO2Sensor(const char* name, const uint8_t address)
+    : I2CDevice(address), SensorDevice(name, "room_co2_concentration", "ppm")
+{
+}
 
 void CO2Sensor::init()
 {
@@ -13,15 +14,16 @@ void CO2Sensor::init()
     uint16_t error = scd4x.stopPeriodicMeasurement();
     if (error) {
         char errorMessage[256];
-        Serial.print("Error trying to execute stopPeriodicMeasurement(): ");
+        Serial.printf("%s: Error trying to execute stopPeriodicMeasurement(): ", getName());
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
     }
+    delay(20);
 
     error = scd4x.startPeriodicMeasurement();
     if (error) {
         char errorMessage[256];
-        Serial.print("Error trying to execute startPeriodicMeasurement(): ");
+        Serial.printf("%s: trying to execute startPeriodicMeasurement(): ", getName());
         errorToString(error, errorMessage, 256);
         Serial.println(errorMessage);
     }
@@ -32,64 +34,39 @@ Measurement CO2Sensor::measureCO2Concentration()
     uint16_t co2 = 0;
     float temperature = 0.0f;
     float humidity = 0.0f;
+    bool isDataReady = false;
 
     uint16_t error = scd4x.getDataReadyFlag(isDataReady);
     if (error) {
         char errorMessage[256];
-        Serial.print("Error trying to execute getDataReadyFlag(): ");
+        Serial.printf("%s: Error trying to execute getDataReadyFlag(): ", getName());
         errorToString(error, errorMessage, 256);
-        Serial.println(errorMessage);
 
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastCO2Measurement.name, INVALID_VALUE, lastCO2Measurement.unit};
-        xSemaphoreGive(dataMutex);
-        return copy;
+        return newInvalidMeasurement(errorMessage);
     }
 
     if (!isDataReady) {
-        Serial.println("Data not ready.");
-
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = lastCO2Measurement;
-        xSemaphoreGive(dataMutex);
-        return copy;
+        return newInvalidMeasurement("Data not ready.");
     }
 
     error = scd4x.readMeasurement(co2, temperature, humidity);
     if (error) {
         char errorMessage[256];
-        Serial.print("Error trying to execute readMeasurement(): ");
+        Serial.printf("%s: Error trying to execute readMeasurement(): ", getName());
         errorToString(error, errorMessage, 256);
-        Serial.println(errorMessage);
 
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastCO2Measurement.name, INVALID_VALUE, lastCO2Measurement.unit};
-        xSemaphoreGive(dataMutex);
-        return copy;
+        return newInvalidMeasurement(errorMessage);
     }
 
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    lastCO2Measurement.value = co2;
-    Measurement copy = lastCO2Measurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
+    return newValidMeasurement(co2);
 }
 
-std::vector<Measurement> CO2Sensor::performMeasurements()
+Measurement CO2Sensor::performMeasurement()
 {
-    return {measureCO2Concentration()};
+    return measureCO2Concentration();
 }
 
-Measurement CO2Sensor::getCO2Value() const
+CommunicationAttemptResult CO2Sensor::testCommunication()
 {
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    Measurement copy = lastCO2Measurement;
-    xSemaphoreGive(dataMutex);
-    return copy;
-}
-
-CommunicationAttemptResult CO2Sensor::testCommunication() const
-{
-    return performTemplateCommunicationTest(name, address);
+    return performTemplateCommunicationTest(getName(), address);
 }

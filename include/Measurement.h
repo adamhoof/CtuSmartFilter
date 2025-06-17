@@ -1,13 +1,11 @@
 #pragma once
 
-using std::string;
-
-using MeasurementName = std::string;
-using Unit = std::string;
+#define MAX_STATUS_MSG_LEN 128
+#include <array>
 
 struct Measurement {
-
-    MeasurementName name;
+    const char* name{""};
     double value{};
-    Unit unit{};
+    const char* unit{""};
+    std::array<char, MAX_STATUS_MSG_LEN> statusMessage{};
 };

@@ -1,8 +1,8 @@
 #include "PWMFan.h"
 #include <esp32-hal-gpio.h>
 
-PWMFan::PWMFan(const std::string& name, const uint8_t pwmPin)
-    : InputDevice(name), PWMDevice(pwmPin)
+PWMFan::PWMFan(const char* name, const uint8_t pwmPin)
+    : PWMControlDevice(name, pwmPin)
 {
 }
 

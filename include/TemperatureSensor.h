@@ -2,13 +2,13 @@
 
 #include <CommunicationTestable.h>
 #include <SensorDevice.h>
-#include <MAX6675.h>
+#include "I2CDevice.h"
+#include <HTU21D.h>
 #include "Measurement.h"
 
-class ThermocoupleSensor : public SensorDevice, public CommunicationTestable
-{
+class TemperatureSensor : public I2CDevice, public SensorDevice, public CommunicationTestable {
 public:
-    explicit ThermocoupleSensor(const char* name, int8_t csPin);
+    TemperatureSensor(const char* name, byte address, const HTU21D& htu);
 
     void init() override;
 
@@ -17,8 +17,6 @@ public:
     Measurement performMeasurement() override;
 
 private:
-    MAX6675 thermocouple;
-
+    HTU21D htu21d;
     Measurement readTemperature();
-    Measurement lastMeasurement;
 };

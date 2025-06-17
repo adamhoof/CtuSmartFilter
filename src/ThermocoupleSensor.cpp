@@ -1,78 +1,69 @@
 #include "ThermocoupleSensor.h"
 #include <SPI.h>
 #include <Arduino.h>
-#include "InvalidValue.h"
+#include <sys/stat.h>
 
-ThermocoupleSensor::ThermocoupleSensor(const std::string& name, const int8_t csPin, const int8_t misoPin,
-                                       const int8_t sckPin)
-    : OutputDevice(name),
-      csPin(csPin),
-      misoPin(misoPin),
-      sckPin(sckPin),
-      thermocouple(sckPin, csPin, misoPin),
-      lastMeasurement({"filter_temperature", INVALID_VALUE, "°C"})
-{
-}
+ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin)
+    : SensorDevice(name, "filter_temperature", "°C"),
+      thermocouple(csPin, &SPI){}
 
 void ThermocoupleSensor::init()
 {
-    pinMode(csPin, OUTPUT);
-    digitalWrite(csPin, HIGH);
-    delay(100);
-    Serial.println("ThermocoupleSensor initialized.");
+    thermocouple.begin();
 }
 
 Measurement ThermocoupleSensor::readTemperature()
 {
-    const double temperature = thermocouple.readCelsius();
+    const uint8_t status = thermocouple.read();
+    const uint16_t rawData = thermocouple.getRawData();
 
-    if (isnan(temperature) || temperature < -100.0) {
-        Serial.println("Error reading temperature from MAX6675.");
-
-        xSemaphoreTake(dataMutex, portMAX_DELAY);
-        Measurement copy = {lastMeasurement.name, INVALID_VALUE, lastMeasurement.unit};
-        xSemaphoreGive(dataMutex);
-
-        return copy;
+    if (rawData == 0x0000) {
+        return newInvalidMeasurement("No response, MISO line is floating or stuck LOW.");
     }
 
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    lastMeasurement.value = temperature;
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
+    if (status != STATUS_OK) {
+        const char* errorMessage = "Unknown error";
 
-    return copy;
-}
-
-std::vector<Measurement> ThermocoupleSensor::performMeasurements()
-{
-    return {readTemperature()};
-}
-
-Measurement ThermocoupleSensor::getTemperatureValue() const
-{
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
-    Measurement copy = lastMeasurement;
-    xSemaphoreGive(dataMutex);
-
-    return copy;
-}
-
-CommunicationAttemptResult ThermocoupleSensor::testCommunication() const
-{
-    Serial.println("ThermocoupleSensor test");
-
-    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
-    digitalWrite(csPin, LOW);
-
-    uint8_t response = SPI.transfer(0x00);
-
-    digitalWrite(csPin, HIGH);
-    SPI.endTransaction();
-
-    if (response == 0 || response == 0xFF) {
-        return {FAILURE, "ThermocoupleSensor: No response or invalid data from SPI device"};
-    } else {
-        return {SUCCESS, "ThermocoupleSensor: Device responded correctly via SPI"};
+        if (status == STATUS_ERROR) {
+            errorMessage = "Thermocouple is open-circuit or disconnected.";
+        } else if (status == STATUS_NO_COMMUNICATION) {
+            errorMessage = "No communication with MAX6675 chip.";
+        }
+        Serial.printf("%s: %s\n", getName(), errorMessage);
+        return newInvalidMeasurement(errorMessage);
     }
+
+    const double temperature = thermocouple.getCelsius();
+
+    return newValidMeasurement(temperature);
+}
+
+Measurement ThermocoupleSensor::performMeasurement()
+{
+    return readTemperature();
+}
+
+CommunicationAttemptResult ThermocoupleSensor::testCommunication() {
+    static char messageBuffer[128];
+    const uint8_t status = thermocouple.read();
+    const uint16_t rawData = thermocouple.getRawData();
+    const char* errorDetail = nullptr;
+
+    if (rawData == 0x0000) {
+        errorDetail = "No response, MISO line is floating or stuck LOW.";
+    } else if (status == STATUS_NO_COMMUNICATION) {
+        errorDetail = "No response, MISO line may be stuck HIGH (check power/CS pin).";
+    } else if (status == STATUS_ERROR) {
+        errorDetail = "Responded correctly but reports an open circuit (check probe).";
+    }
+
+    if (errorDetail != nullptr) {
+        snprintf(messageBuffer, sizeof(messageBuffer), "Device '%s': %s",
+                 getName(), errorDetail);
+        return {FAILURE, messageBuffer};
+    }
+
+    snprintf(messageBuffer, sizeof(messageBuffer),
+             "Device '%s': Responded correctly with a valid reading.", getName());
+    return {SUCCESS, messageBuffer};
 }
