@@ -3,22 +3,14 @@
 #include <ArduinoJson.h>
 #include "CollectedData.h"
 
-void measurementsPerformingTask(void* parameter)
+void dataCollectionTask(void* parameter)
 {
     const auto* params = static_cast<MeasurementsPerformingTaskParams*>(parameter);
-
     while (true) {
         for (const auto& sensor: params->sensorsToCollectMeasurementsFrom) {
-            auto m = sensor->performMeasurement();
-            Serial.print("Measurement name ");
-            Serial.print(m.name.c_str());
-            Serial.print(", ");
-            Serial.print(m.unit.c_str());
-            Serial.print(", ");
-            Serial.print(m.value);
-            Serial.print("\n");
-            vTaskDelay(pdMS_TO_TICKS(50));
+            params->sensorDataBank.updateMeasurement(sensor->getName(), sensor->performMeasurement());
+            vTaskDelay(pdMS_TO_TICKS(150));
         }
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(7000));
     }
 }

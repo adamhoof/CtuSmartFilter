@@ -2,7 +2,6 @@
 #include <SPI.h>
 #include <Arduino.h>
 #include <sys/stat.h>
-#include "InvalidValue.h"
 
 ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin)
     : SensorDevice(name, "filter_temperature", "°C"),
@@ -11,33 +10,37 @@ ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin)
 void ThermocoupleSensor::init()
 {
     thermocouple.begin();
-    Serial.println("ThermocoupleSensor initialized.");
 }
 
 Measurement ThermocoupleSensor::readTemperature()
 {
     const uint8_t status = thermocouple.read();
+    const uint16_t rawData = thermocouple.getRawData();
+
+    if (rawData == 0x0000) {
+        return newInvalidMeasurement("No response, MISO line is floating or stuck LOW.");
+    }
 
     if (status != STATUS_OK) {
+        const char* errorMessage = "Unknown error";
+
         if (status == STATUS_ERROR) {
-            Serial.println("Error: Thermocouple is open-circuit or disconnected.");
+            errorMessage = "Thermocouple is open-circuit or disconnected.";
+        } else if (status == STATUS_NO_COMMUNICATION) {
+            errorMessage = "No communication with MAX6675 chip.";
         }
-        else if (status == STATUS_NO_COMMUNICATION) {
-            Serial.println("Error: No communication with MAX6675 chip.");
-        } else {
-            Serial.println("Error: Unknown error.");
-        }
-        return newMeasurement(INVALID_VALUE);
+        Serial.printf("%s: %s\n", getName(), errorMessage);
+        return newInvalidMeasurement(errorMessage);
     }
 
     const double temperature = thermocouple.getCelsius();
 
-    return newMeasurement(temperature);
+    return newValidMeasurement(temperature);
 }
 
 Measurement ThermocoupleSensor::performMeasurement()
 {
-    return {readTemperature()};
+    return readTemperature();
 }
 
 CommunicationAttemptResult ThermocoupleSensor::testCommunication() {

@@ -2,8 +2,11 @@
 #include "SensorDevice.h"
 #include <vector>
 
+#include "SensorDataBank.h"
+
 struct MeasurementsPerformingTaskParams {
   std::vector<SensorDevice*> sensorsToCollectMeasurementsFrom;
+  SensorDataBank& sensorDataBank;
 };
 
-void measurementsPerformingTask(void* parameter);
+void dataCollectionTask(void* parameter);

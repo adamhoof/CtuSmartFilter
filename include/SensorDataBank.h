@@ -26,7 +26,7 @@ public:
 private:
     struct SensorData {
         Measurement latestMeasurement;
-        uint32_t totalFailureCount = 0;
+        uint32_t consecutiveFailureCount = 0;
         ReliabilityStatus reliability = ReliabilityStatus::RELIABLE;
     };
 

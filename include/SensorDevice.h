@@ -14,7 +14,8 @@ public:
     virtual Measurement performMeasurement() = 0;
 
 protected:
-    Measurement newMeasurement(double value) const;
+    Measurement newValidMeasurement(double value) const;
+    Measurement newInvalidMeasurement(const char* errorMessage) const;
 
     const char* measurementName;
     const char* measurementUnit;

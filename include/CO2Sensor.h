@@ -17,8 +17,6 @@ public:
 
 private:
     SensirionI2CScd4x scd4x;
-    double lastValue;
-    bool isDataReady;
 
     Measurement measureCO2Concentration();
 };

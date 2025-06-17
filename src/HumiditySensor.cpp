@@ -17,13 +17,12 @@ void HumiditySensor::init()
 Measurement HumiditySensor::readHumidity()
 {
     const float humidity = htu21d.readHumidity();
-    if (humidity == 999) {
-        Serial.println("Error reading humidity from HTU21D.");
-
-        return newMeasurement(INVALID_VALUE);
+    if (humidity == HTU21D_ERROR) {
+        const char* errorMessage = "Failed to read from HTU21D chip.";
+        Serial.printf("%s: %s\n", getName(), errorMessage);
+        return newInvalidMeasurement(errorMessage);
     }
-
-    return newMeasurement(humidity);
+    return newValidMeasurement(humidity);
 }
 
 Measurement HumiditySensor::performMeasurement()

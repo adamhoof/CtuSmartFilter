@@ -4,7 +4,7 @@
 
 bool isCo2LevelAboveThreshold(const CO2Sensor& co2Sensor, const uint32_t co2Threshold)
 {
-    const Measurement co2Measurement = co2Sensor.getCO2Value();
+    const Measurement co2Measurement = Measurement{};
     if (co2Measurement.value == INVALID_VALUE) {
         return true;
     }
@@ -17,17 +17,18 @@ void regulateHeatingPad(const FilterRegenTaskParams* params, FilterRegenTaskConf
 {
     unsigned int heatingPadDuration = pdMS_TO_TICKS(conf.heatingPadDurationMs);
     unsigned int startTime = xTaskGetTickCount();
-    params->heatingPad.setPower(255);
+    params->heatingPad.setPower(100);
 
+    // TODO get to target temp first, then wait for heatingPadDuration
     while (xTaskGetTickCount() - startTime < heatingPadDuration) {
-        Measurement temperatureMeasurement = params->thermocoupleSensor.getTemperatureValue();
+        Measurement temperatureMeasurement = Measurement{};
         double currentTemp = temperatureMeasurement.value;
 
         if (currentTemp < conf.heatingPadTargetTemp) {
-            params->heatingPad.setPower(255);
+            params->heatingPad.setPower(100);
         }
         else {
-            params->heatingPad.setPower(128);
+            params->heatingPad.setPower(50);
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -60,6 +61,7 @@ void filterRegenTask(void* parameter)
     //TODO make this react to changes in state?
     const TickType_t periodDuration = pdMS_TO_TICKS(conf.levelPeriods[conf.currentLevel - 1]);
 
+    // TODO switch true to while readings are valid, then perform this task, otherwise exit
     while (true) {
         Serial.println("Entering cycle of while true");
         const TickType_t periodStartTime = xTaskGetTickCount();
@@ -68,7 +70,7 @@ void filterRegenTask(void* parameter)
         while (xTaskGetTickCount() - periodStartTime < periodDuration) {
             Serial.printf("Is CO2 high?: %d, value: %f\n",
                           isCo2LevelAboveThreshold(params->co2Sensor, conf.co2Threshold),
-                          params->co2Sensor.getCO2Value().value);
+                          12.0);
             isCo2LevelAboveThreshold(params->co2Sensor, conf.co2Threshold)
                 ? params->fan.runAtMax()
                 : params->fan.runAtIdle();

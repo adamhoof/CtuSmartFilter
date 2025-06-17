@@ -17,13 +17,12 @@ void TemperatureSensor::init()
 Measurement TemperatureSensor::readTemperature()
 {
     const float temperature = htu21d.readTemperature();
-    if (temperature == 999) {
-        Serial.println("Error reading temperature from HTU21D.");
-
-        return newMeasurement(INVALID_VALUE);
+    if (temperature == HTU21D_ERROR) {
+        const char* errorMessage = "Failed to read from HTU21D chip.";
+        Serial.printf("%s: %s\n", getName(), errorMessage);
+        return newInvalidMeasurement(errorMessage);
     }
-
-    return newMeasurement(temperature);
+    return newValidMeasurement(temperature);
 }
 
 Measurement TemperatureSensor::performMeasurement()

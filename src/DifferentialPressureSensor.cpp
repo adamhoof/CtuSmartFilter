@@ -28,27 +28,24 @@ void DifferentialPressureSensor::init()
     }
 }
 
-Measurement DifferentialPressureSensor::readDifferentialPressure()
-{
+Measurement DifferentialPressureSensor::readDifferentialPressure() {
     float differentialPressure = 0.0f;
     float temperature = 0.0f;
 
     const uint16_t error = differentialPressureSensor.readMeasurement(differentialPressure, temperature);
+
     if (error) {
-        char errorMessage[256];
-        Serial.print("Error trying to execute readMeasurement(): ");
-        errorToString(error, errorMessage, 256);
-        Serial.println(errorMessage);
-
-        return newMeasurement(INVALID_VALUE);
+        char errorMessageBuffer[256];
+        errorToString(error, errorMessageBuffer, sizeof(errorMessageBuffer));
+        Serial.printf("%s: %s\n", getName(), errorMessageBuffer);
+        return newInvalidMeasurement(errorMessageBuffer);
     }
-
-    return newMeasurement(differentialPressure);
+    return newValidMeasurement(differentialPressure);
 }
 
 Measurement DifferentialPressureSensor::performMeasurement()
 {
-    return {readDifferentialPressure()};
+    return readDifferentialPressure();
 }
 
 CommunicationAttemptResult DifferentialPressureSensor::testCommunication()

@@ -1,7 +1,5 @@
 #include "CommunicationTester.h"
 
-#include <functional>
-
 CommunicationTester::CommunicationTester() = default;
 
 std::vector<CommunicationAttemptResult> CommunicationTester::testDevices(const std::vector<CommunicationTestable*>& communicationTestableDevices)

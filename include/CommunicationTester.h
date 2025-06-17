@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <string>
 #include "CommunicationTestable.h"
 
 class CommunicationTester {

@@ -32,11 +32,13 @@ void SensorDataBank::updateMeasurement(
     SensorData& sd = it->second;
     sd.latestMeasurement = measurement;
 
-    if (strcmp(measurement.error, "OK") != 0) {
-        ++sd.totalFailureCount;
+    if (strcmp(measurement.statusMessage.data(), "OK") != 0) {
+        ++sd.consecutiveFailureCount;
+    } else {
+        sd.consecutiveFailureCount = 0;
     }
 
-    if (sd.reliability == ReliabilityStatus::RELIABLE && sd.totalFailureCount >= MAX_TOTAL_FAILURES) {
+    if (sd.reliability == ReliabilityStatus::RELIABLE && sd.consecutiveFailureCount >= MAX_TOTAL_FAILURES) {
         sd.reliability = ReliabilityStatus::UNRELIABLE;
         Serial.printf("ALERT: Sensor '%s' has been flagged as unreliable.\n",sensorDeviceName);
     }
@@ -46,14 +48,14 @@ void SensorDataBank::updateMeasurement(
 
 Measurement SensorDataBank::getMeasurement(const char* sensorDeviceName) {
     if (xSemaphoreTake(mutex, portMAX_DELAY) != pdTRUE) {
-        return {nullptr, 0.0, nullptr, "MUTEX_FAIL"};
+        return {nullptr, 0.0, nullptr};
     }
 
     auto it = sensorDataEntriesMap.find(sensorDeviceName);
 
     if (it == sensorDataEntriesMap.end()) {
         xSemaphoreGive(mutex);
-        return {nullptr, 0.0, nullptr, "NOT_REGISTERED"};
+        return {nullptr, 0.0, nullptr};
     }
 
     const Measurement copy = it->second.latestMeasurement;
