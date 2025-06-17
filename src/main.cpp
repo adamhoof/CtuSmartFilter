@@ -92,7 +92,7 @@ void setup()
     configureMqttClient();
 
     WiFi.persistent(false);
-    WiFi.setAutoReconnect(true);
+    WiFi.setAutoReconnect(false);
 
     WiFi.onEvent(wifiDisconnectedEventHandler, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     WiFi.onEvent(wifiConnectedEventHandler, ARDUINO_EVENT_WIFI_STA_GOT_IP);
