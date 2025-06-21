@@ -6,14 +6,14 @@ espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
 
 void configureMqttClient()
 {
-    mqttClient.setCACert(rootCAChain);
+    mqttClient.setCACert(ROOT_CA_CHAIN);
     mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
     mqttClient.onConnect(onMqttConnect);
     mqttClient.onDisconnect(onMqttDisconnect);
     mqttClient.onSubscribe(onMqttSubscribe);
     mqttClient.onMessage(onMqttMessage);
     mqttClient.onPublish(onMqttPublish);
-    mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     mqttClient.setClientId(MQTT_CLIENT_ID);
     mqttClient.setCleanSession(true);
     mqttClient.setKeepAlive(15);
@@ -32,6 +32,7 @@ void connectMqttClientBlocking()
 void onMqttConnect(const bool sessionPresent)
 {
     Serial.printf("Connected to MQTT broker with client ID %s\n", mqttClient.getClientId());
+    // TODO SUBSCRIBE TO CONTROL TOPICS
 }
 
 void onMqttDisconnect(espMqttClientTypes::DisconnectReason reason)
