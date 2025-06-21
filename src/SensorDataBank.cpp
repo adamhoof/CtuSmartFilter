@@ -38,7 +38,7 @@ void SensorDataBank::updateMeasurement(
         sd.consecutiveFailureCount = 0;
     }
 
-    if (sd.reliability == ReliabilityStatus::RELIABLE && sd.consecutiveFailureCount >= MAX_TOTAL_FAILURES) {
+    if (sd.reliability == ReliabilityStatus::RELIABLE && sd.consecutiveFailureCount >= MAX_CONSECUTIVE_FAILURES) {
         sd.reliability = ReliabilityStatus::UNRELIABLE;
         Serial.printf("ALERT: Sensor '%s' has been flagged as unreliable.\n",sensorDeviceName);
     }

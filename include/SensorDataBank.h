@@ -32,5 +32,5 @@ private:
 
     std::unordered_map<std::string, SensorData> sensorDataEntriesMap;
     SemaphoreHandle_t mutex;
-    const uint32_t MAX_TOTAL_FAILURES = 5;
+    const uint32_t MAX_CONSECUTIVE_FAILURES = 3;
 };
