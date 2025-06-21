@@ -1,4 +1,5 @@
 #include "CommunicationTester.h"
+#include <esp32-hal.h>
 
 CommunicationTester::CommunicationTester() = default;
 
@@ -12,6 +13,7 @@ std::vector<CommunicationAttemptResult> CommunicationTester::testDevices(const s
             result.resultStatus == SUCCESS ? SUCCESS : FAILURE,
             result.message
         });
+        delay(100);
     }
 
     return results;

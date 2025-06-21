@@ -77,6 +77,7 @@ void initializeDevices(const std::vector<Device*>& devices)
 {
     for (auto& device: devices) {
         device->init();
+        delay(100);
     }
 }
 
