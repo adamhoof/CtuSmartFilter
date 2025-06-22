@@ -22,49 +22,6 @@
 
 static constexpr uint8_t csPin = 23, sckPin = 18, misoPin = 19;
 
-// A struct for our flash storage demo
-struct TestData
-{
-    int id;
-    float value;
-    bool enabled;
-};
-
-/*void flashTest()
-{
-    Preferences preferences;
-
-    // 1. Start the Preferences library in read/write mode.
-
-    // 2. Prepare data and attempt to write it to flash.
-
-    // 3. Close the preferences to ensure data is committed.
-
-    Serial.println("\nRe-opening flash to read data...");
-
-    // 4. Re-open preferences in read-only mode.
-    preferences.begin("CtuSmartFilter", true);
-
-    // 5. Prepare a struct to hold the read data.
-    TestData dataToRead;
-
-    // 6. Attempt to read the data back.
-    size_t bytesRead = preferences.getBytes("test_data", &dataToRead, sizeof(TestData));
-
-    if (bytesRead == sizeof(TestData)) {
-        Serial.println("Success! Read data from flash:");
-        Serial.printf("ID: %d, Value: %.2f, Enabled: %s\n", dataToRead.id, dataToRead.value,
-                      dataToRead.enabled ? "true" : "false");
-    }
-    else {
-        Serial.println("Error: Failed to read data from flash or key does not exist.");
-    }
-
-    // 7. Close the preferences again.
-    preferences.end();
-}*/
-
-
 void initializeBusses()
 {
     Wire.begin();
@@ -91,6 +48,7 @@ void runConnectionTests(const std::vector<CommunicationTestable*>& devices)
 
 void setup()
 {
+    initializeBusses();
     static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
     static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
 
@@ -114,13 +72,12 @@ void setup()
 
     // avoid dangling mosi pin state when disconnected
     pinMode(misoPin, INPUT_PULLUP);
-    initializeBusses();
     initializeDevices({
+        &thermocoupleSensor,
         &differentialPressureSensor,
         &co2Sensor,
         &temperatureSensor,
-        &humiditySensor,
-        &thermocoupleSensor /*,
+        &humiditySensor, /*,
         &pwmFan,
         &pwmHeatingPad*/
     });
@@ -144,6 +101,7 @@ void setup()
         Serial.println(WiFi.localIP());
     }, ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
+    // TODO same mechanism as in the keep connections alive - no infinite boi, mby extract to function
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     while (!WiFi.isConnected()) {
         delay(300);
@@ -173,6 +131,7 @@ void setup()
 
     static auto keepConnectionsAliveTaskParams = KeepConnectionsAliveTaskParams{
         .mqttClient = mqttClient,
+        .wifiRestartTimeoutTicks = pdMS_TO_TICKS(10000)
     };
     xTaskCreate(keepConnectionsAlive, "keepConnectionsAlive", 10000, &keepConnectionsAliveTaskParams, 1, nullptr);
     static auto dataPublishingTaskParams = DataPublishingTaskParams{
