@@ -1,11 +1,17 @@
 #include "MqttClientWrapper.h"
 #include "secrets.h"
-#include "tasks/KeepConnectionsAliveTask.h"
+#include "tasks/NetworkTask.h"
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
+QueueHandle_t mqttPublishQueue;
+
+const char* MQTT_DATA_TOPIC ="demo/hofmaad2/status";
+const char* MQTT_CREDENTIALS_STATUS_TOPIC ="demo/hofmaad2/credentials_status";
+const char* MQTT_CLIENT_ID = "ESP32_CTU_SMART_FILTER";
 
 void configureMqttClient()
 {
+    mqttPublishQueue = xQueueCreate(10, sizeof(MqttPublishMessage));
     mqttClient.setCACert(ROOT_CA_CHAIN);
     mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
     mqttClient.onConnect(onMqttConnect);
@@ -77,4 +83,19 @@ void onMqttPublish(const uint16_t packetId)
     Serial.println("Publish acknowledged.");
     Serial.print("  packetId: ");
     Serial.println(packetId);
+}
+
+void queueMqttMessage(const char* topic, const char* payload, const uint8_t qos, const bool retain)
+{
+    MqttPublishMessage msg{};
+
+    snprintf(msg.topic, sizeof(msg.topic), "%s", topic);
+    snprintf(msg.payload, sizeof(msg.payload), "%s", payload);
+
+    msg.qos = qos;
+    msg.retain = retain;
+
+    if (xQueueSend(mqttPublishQueue, &msg, 0) != pdPASS) {
+        Serial.println("Failed to queue MQTT message. Queue full.");
+    }
 }

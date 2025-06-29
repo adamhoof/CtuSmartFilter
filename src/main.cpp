@@ -12,13 +12,14 @@
 #include <WiFi.h>
 #include <freertos/task.h>
 #include <tasks/DataCollectionTask.h>
-#include <tasks/DataPublishingTask.h>
 #include <tasks/FilterRegenTask.h>
-#include <tasks/KeepConnectionsAliveTask.h>
+#include <tasks/NetworkTask.h>
 #include "HumiditySensor.h"
 #include "MqttClientWrapper.h"
 #include "SensorDataBank.h"
 #include <Preferences.h>
+#include "CredentialsValidator.h"
+#include "FlashStore/FlashStore.h"
 
 static constexpr uint8_t csPin = 23, sckPin = 18, misoPin = 19;
 
@@ -46,9 +47,66 @@ void runConnectionTests(const std::vector<CommunicationTestable*>& devices)
     }
 }
 
+void fetchCredentials(Credentials& credentials, FlashStore& flashStore, const CredentialsStatus& credentialsStatus)
+{
+    if (credentialsStatus == CredentialsStatus::UPDATE_REQUESTED) {
+        if (!flashStore.getCredentials(credentials, CredentialStore::STAGING)) {
+            flashStore.rollbackPendingUpdate();
+            ESP.restart();
+        }
+        CredentialsValidator credentialsValidator;
+        const ValidationResult validationResult = credentialsValidator.validate(credentials);
+        if (validationResult == ValidationResult::SUCCESS) {
+            flashStore.commitSuccessfulUpdate();
+        } else {
+            flashStore.rollbackPendingUpdate();
+        }
+        Serial.println("Restarting");
+        ESP.restart();
+    } else {
+        flashStore.getCredentials(credentials, CredentialStore::ACTUAL);
+    }
+}
+
+void publishCredentialsStatus(const CredentialsStatus& credentialsStatus)
+{
+    const char* statusMessage;
+    switch (credentialsStatus) {
+        case CredentialsStatus::OK:
+            statusMessage = "OK";
+            break;
+        case CredentialsStatus::UPDATE_SUCCESSFUL:
+            statusMessage = "Update successful";
+            break;
+        case CredentialsStatus::UPDATE_ROLLBACK:
+            statusMessage = "Update rollback";
+            break;
+        default:
+            statusMessage = "Unknown credentials status";
+            break;
+    }
+    Serial.printf("Publishing credentials status: %s",statusMessage);
+    queueMqttMessage(MQTT_CREDENTIALS_STATUS_TOPIC,statusMessage);
+}
+
 void setup()
 {
     initializeBusses();
+    Preferences preferences;
+    preferences.begin("creds", false);
+    preferences.putUChar("update_status", static_cast<uint8_t>(CredentialsStatus::OK));
+    preferences.end();
+
+    FlashStore& flashStore = FlashStore::getInstance();
+    Credentials credentials;
+    const CredentialsStatus credentialsStatus = flashStore.getCredentialsUpdateStatus();
+    fetchCredentials(credentials, flashStore, credentialsStatus);
+    flashStore.stageNewCredentials(credentials);
+
+    configureMqttClient();
+    publishCredentialsStatus(credentialsStatus);
+
+    delay(3000);
     static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
     static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
 
@@ -90,8 +148,6 @@ void setup()
         &thermocoupleSensor
     });
 
-    configureMqttClient();
-
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
 
@@ -102,7 +158,7 @@ void setup()
     }, ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
     // TODO same mechanism as in the keep connections alive - no infinite boi, mby extract to function
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.begin(credentials.wifiSsid, credentials.wifiPass);
     while (!WiFi.isConnected()) {
         delay(300);
         Serial.print(".");
@@ -131,20 +187,14 @@ void setup()
 
     static auto keepConnectionsAliveTaskParams = KeepConnectionsAliveTaskParams{
         .mqttClient = mqttClient,
-        .wifiRestartTimeoutTicks = pdMS_TO_TICKS(10000)
+        .wifiRestartTimeoutTicks = pdMS_TO_TICKS(15000)
     };
-    xTaskCreate(keepConnectionsAlive, "keepConnectionsAlive", 10000, &keepConnectionsAliveTaskParams, 1, nullptr);
-    static auto dataPublishingTaskParams = DataPublishingTaskParams{
-        .mqttClient = mqttClient,
-        .devicesWhoseDataToPublish = {
-            &differentialPressureSensor, &co2Sensor, &temperatureSensor, &humiditySensor, &thermocoupleSensor
-        },
-        .sensorDataBank = sensorDataBank
-    };
-    xTaskCreate(dataPublishingTask, "dataPublishingTask", 8192, &dataPublishingTaskParams, 1, nullptr);
+    xTaskCreate(networkTask, "networkTask", 10000, &keepConnectionsAliveTaskParams, 1, nullptr);
+
+    // after setup is done with setting things up, delete the setup task and thus the infinite loop, freeing its stack and removing it from the scheduler
+    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelete(nullptr);
 }
 
 void loop()
-{
-    delay(10000);
-}
+{}

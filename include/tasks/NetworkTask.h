@@ -7,4 +7,4 @@ struct KeepConnectionsAliveTaskParams
   TickType_t wifiRestartTimeoutTicks;
 };
 
-void keepConnectionsAlive(void* params);
+void networkTask(void* params);
