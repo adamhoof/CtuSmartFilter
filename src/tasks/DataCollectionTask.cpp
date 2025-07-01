@@ -1,7 +1,6 @@
 #include "tasks/DataCollectionTask.h"
 #include <ArduinoJson.h>
 #include "MqttClientWrapper.h"
-#include "secrets.h"
 
 void dataCollectionTask(void* parameter)
 {

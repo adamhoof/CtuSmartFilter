@@ -1,5 +1,5 @@
 #include "MqttClientWrapper.h"
-#include "secrets.h"
+#include "FlashStore/Credentials.h"
 #include "tasks/NetworkTask.h"
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);
@@ -9,17 +9,17 @@ const char* MQTT_DATA_TOPIC ="demo/hofmaad2/status";
 const char* MQTT_CREDENTIALS_STATUS_TOPIC ="demo/hofmaad2/credentials_status";
 const char* MQTT_CLIENT_ID = "ESP32_CTU_SMART_FILTER";
 
-void configureMqttClient()
+void configureMqttClient(const Credentials& credentials)
 {
     mqttPublishQueue = xQueueCreate(10, sizeof(MqttPublishMessage));
-    mqttClient.setCACert(ROOT_CA_CHAIN);
-    mqttClient.setCredentials(MQTT_USER, MQTT_PASS);
+    mqttClient.setCACert(credentials.rootCa.c_str());
+    mqttClient.setCredentials(credentials.mqttUser.c_str(), credentials.mqttPass.c_str());
     mqttClient.onConnect(onMqttConnect);
     mqttClient.onDisconnect(onMqttDisconnect);
     mqttClient.onSubscribe(onMqttSubscribe);
     mqttClient.onMessage(onMqttMessage);
     mqttClient.onPublish(onMqttPublish);
-    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+    mqttClient.setServer(credentials.mqttBroker.c_str(), credentials.mqttPort);
     mqttClient.setClientId(MQTT_CLIENT_ID);
     mqttClient.setCleanSession(true);
     mqttClient.setKeepAlive(15);

@@ -8,7 +8,6 @@
 #include "TemperatureSensor.h"
 #include <Wire.h>
 #include "ThermocoupleSensor.h"
-#include "secrets.h"
 #include <WiFi.h>
 #include <freertos/task.h>
 #include <tasks/DataCollectionTask.h>
@@ -85,7 +84,7 @@ void publishCredentialsStatus(const CredentialsStatus& credentialsStatus)
             statusMessage = "Unknown credentials status";
             break;
     }
-    Serial.printf("Publishing credentials status: %s",statusMessage);
+    Serial.printf("Publishing credentials status: %s\n",statusMessage);
     queueMqttMessage(MQTT_CREDENTIALS_STATUS_TOPIC,statusMessage);
 }
 
@@ -97,16 +96,14 @@ void setup()
     preferences.putUChar("update_status", static_cast<uint8_t>(CredentialsStatus::OK));
     preferences.end();
 
-    FlashStore& flashStore = FlashStore::getInstance();
-    Credentials credentials;
+    static FlashStore& flashStore = FlashStore::getInstance();
+    static Credentials credentials;
     const CredentialsStatus credentialsStatus = flashStore.getCredentialsUpdateStatus();
     fetchCredentials(credentials, flashStore, credentialsStatus);
-    flashStore.stageNewCredentials(credentials);
 
-    configureMqttClient();
+    configureMqttClient(credentials);
     publishCredentialsStatus(credentialsStatus);
 
-    delay(3000);
     static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
     static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
 

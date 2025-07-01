@@ -3,6 +3,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
+#include "FlashStore/Credentials.h"
+
 extern espMqttClientSecure mqttClient;
 extern QueueHandle_t mqttPublishQueue;
 
@@ -18,7 +20,7 @@ struct MqttPublishMessage
     bool retain;
 };
 
-void configureMqttClient();
+void configureMqttClient(const Credentials& credentials);
 void connectMqttClientBlocking();
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(espMqttClientTypes::DisconnectReason reason);
