@@ -1,10 +1,9 @@
 #include "ThermocoupleSensor.h"
 #include <SPI.h>
 #include <Arduino.h>
-#include <sys/stat.h>
 
-ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin)
-    : SensorDevice(name, "filter_temperature", "°C"),
+ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin, SemaphoreHandle_t commsMutex)
+    : SensorDevice(name, "filter_temperature", "°C", commsMutex),
       thermocouple(csPin, &SPI){}
 
 void ThermocoupleSensor::init()
@@ -12,7 +11,7 @@ void ThermocoupleSensor::init()
     thermocouple.begin();
 }
 
-Measurement ThermocoupleSensor::readTemperature()
+Measurement ThermocoupleSensor::doMeasurement()
 {
     const uint8_t status = thermocouple.read();
     const uint16_t rawData = thermocouple.getRawData();
@@ -36,11 +35,6 @@ Measurement ThermocoupleSensor::readTemperature()
     const double temperature = thermocouple.getCelsius();
 
     return newValidMeasurement(temperature);
-}
-
-Measurement ThermocoupleSensor::performMeasurement()
-{
-    return readTemperature();
 }
 
 CommunicationAttemptResult ThermocoupleSensor::testCommunication() {

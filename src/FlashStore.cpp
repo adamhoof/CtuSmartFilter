@@ -1,4 +1,4 @@
-#include "FlashStore/FlashStore.h"
+#include "FlashStore.h"
 #include <Arduino.h>
 #include "LockGuard.h"
 

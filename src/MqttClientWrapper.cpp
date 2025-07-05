@@ -1,5 +1,5 @@
 #include "MqttClientWrapper.h"
-#include "FlashStore/Credentials.h"
+#include "Credentials.h"
 #include "tasks/NetworkTask.h"
 
 espMqttClientSecure mqttClient(espMqttClientTypes::UseInternalTask::NO);

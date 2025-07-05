@@ -8,18 +8,13 @@
 class DifferentialPressureSensor : public I2CDevice, public SensorDevice, public CommunicationTestable
 {
 public:
-    DifferentialPressureSensor(const char* name, byte address);
+    DifferentialPressureSensor(const char* name, byte address, SemaphoreHandle_t commsMutex);
 
     void init() override;
 
     CommunicationAttemptResult testCommunication() override;
 
-    Measurement performMeasurement() override;
-
-    Measurement getDifferentialPressureValue() const;
-
 private:
+    Measurement doMeasurement() override;
     SensirionI2CSdp differentialPressureSensor;
-
-    Measurement readDifferentialPressure();
 };

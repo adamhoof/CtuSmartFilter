@@ -1,11 +1,10 @@
 #include "DifferentialPressureSensor.h"
 #include <Wire.h>
 #include <Arduino.h>
-#include <InvalidValue.h>
 
-DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address)
+DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address, SemaphoreHandle_t commsMutex)
     : I2CDevice(address),
-      SensorDevice(name, "filter_differential_pressure", "Pa"){}
+      SensorDevice(name, "filter_differential_pressure", "Pa", commsMutex){}
 
 void DifferentialPressureSensor::init()
 {
@@ -28,7 +27,8 @@ void DifferentialPressureSensor::init()
     }
 }
 
-Measurement DifferentialPressureSensor::readDifferentialPressure() {
+Measurement DifferentialPressureSensor::doMeasurement()
+{
     float differentialPressure = 0.0f;
     float temperature = 0.0f;
 
@@ -41,11 +41,6 @@ Measurement DifferentialPressureSensor::readDifferentialPressure() {
         return newInvalidMeasurement(errorMessageBuffer);
     }
     return newValidMeasurement(differentialPressure);
-}
-
-Measurement DifferentialPressureSensor::performMeasurement()
-{
-    return readDifferentialPressure();
 }
 
 CommunicationAttemptResult DifferentialPressureSensor::testCommunication()

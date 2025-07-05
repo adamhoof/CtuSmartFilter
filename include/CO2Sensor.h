@@ -7,16 +7,13 @@
 class CO2Sensor : public I2CDevice, public SensorDevice, public CommunicationTestable
 {
 public:
-    CO2Sensor(const char* name, uint8_t address);
+    CO2Sensor(const char* name, uint8_t address, SemaphoreHandle_t commsMutex);
 
     void init() override;
 
     CommunicationAttemptResult testCommunication() override;
 
-    Measurement performMeasurement() override;
-
 private:
+    Measurement doMeasurement() override;
     SensirionI2CScd4x scd4x;
-
-    Measurement measureCO2Concentration();
 };

@@ -1,9 +1,8 @@
 #include "CO2Sensor.h"
 #include <Arduino.h>
-#include <freertos/FreeRTOS.h>
 
-CO2Sensor::CO2Sensor(const char* name, const uint8_t address)
-    : I2CDevice(address), SensorDevice(name, "room_co2_concentration", "ppm")
+CO2Sensor::CO2Sensor(const char* name, const uint8_t address, SemaphoreHandle_t commsMutex)
+    : I2CDevice(address), SensorDevice(name, "room_co2_concentration", "ppm", commsMutex)
 {
 }
 
@@ -29,7 +28,7 @@ void CO2Sensor::init()
     }
 }
 
-Measurement CO2Sensor::measureCO2Concentration()
+Measurement CO2Sensor::doMeasurement()
 {
     uint16_t co2 = 0;
     float temperature = 0.0f;
@@ -59,11 +58,6 @@ Measurement CO2Sensor::measureCO2Concentration()
     }
 
     return newValidMeasurement(co2);
-}
-
-Measurement CO2Sensor::performMeasurement()
-{
-    return measureCO2Concentration();
 }
 
 CommunicationAttemptResult CO2Sensor::testCommunication()

@@ -16,31 +16,41 @@
 #include "HumiditySensor.h"
 #include "MqttClientWrapper.h"
 #include "SensorDataBank.h"
-#include <Preferences.h>
 #include "CredentialsValidator.h"
-#include "FlashStore/FlashStore.h"
+#include "LockGuard.h"
+#include "FlashStore.h"
 
-static constexpr uint8_t csPin = 23, sckPin = 18, misoPin = 19;
+static constexpr uint8_t csPin = 23;
+static constexpr uint8_t sckPin = 18;
+static constexpr uint8_t misoPin = 19;
 
-void initializeBusses()
+static constexpr uint8_t sdaPin = 21;
+static constexpr uint8_t sclPin = 22;
+
+void initializeBusses(SemaphoreHandle_t commsMutex)
 {
+    // avoid dangling miso pin state when disconnected
+    pinMode(misoPin, INPUT_PULLUP);
+    LockGuard lockGuard(commsMutex);
+    Wire.setPins(sdaPin, sclPin);
     Wire.begin();
     Serial.begin(9600);
     // MAX6675 is output only, no mosi needed
     SPI.begin(sckPin, misoPin);
 }
 
-void initializeDevices(const std::vector<Device*>& devices)
+void initializeDevices(const std::vector<Device*>& devices, SemaphoreHandle_t commsMutex)
 {
     for (auto& device: devices) {
+        LockGuard lockGuard(commsMutex);
         device->init();
         delay(100);
     }
 }
 
-void runConnectionTests(const std::vector<CommunicationTestable*>& devices)
+void runConnectionTests(const std::vector<CommunicationTestable*>& devices, SemaphoreHandle_t commsMutex)
 {
-    for (const auto& r: CommunicationTester::testDevices(devices)) {
+    for (const auto& r: CommunicationTester::testDevices(devices, commsMutex)) {
         Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: " : "FAILURE: ");
         Serial.println(r.message.c_str());
     }
@@ -90,11 +100,8 @@ void publishCredentialsStatus(const CredentialsStatus& credentialsStatus)
 
 void setup()
 {
-    initializeBusses();
-    Preferences preferences;
-    preferences.begin("creds", false);
-    preferences.putUChar("update_status", static_cast<uint8_t>(CredentialsStatus::OK));
-    preferences.end();
+    static SemaphoreHandle_t commsMutex = xSemaphoreCreateMutex();
+    initializeBusses(commsMutex);
 
     static FlashStore& flashStore = FlashStore::getInstance();
     static Credentials credentials;
@@ -105,15 +112,15 @@ void setup()
     configureMqttClient(credentials);
     publishCredentialsStatus(credentialsStatus);
 
-    static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25);
-    static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62);
+    static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25, commsMutex);
+    static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62, commsMutex);
 
     // To keep things simple, the multi value HTU21D sensor is split into 2 different sensors, that both use the same physical sensor
     static HTU21D htu21d;
-    static TemperatureSensor temperatureSensor("RoomTemperatureSensor", 0x40, htu21d);
-    static HumiditySensor humiditySensor("RoomHumiditySensor", 0x40, htu21d);
+    static TemperatureSensor temperatureSensor("RoomTemperatureSensor", 0x40, htu21d, commsMutex);
+    static HumiditySensor humiditySensor("RoomHumiditySensor", 0x40, htu21d, commsMutex);
 
-    static ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", csPin);
+    static ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", csPin, commsMutex);
 
     static PWMFan pwmFan("PWMFan", 26);
     static PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16);
@@ -126,8 +133,6 @@ void setup()
         thermocoupleSensor.getName(),
     });
 
-    // avoid dangling mosi pin state when disconnected
-    pinMode(misoPin, INPUT_PULLUP);
     initializeDevices({
         &thermocoupleSensor,
         &differentialPressureSensor,
@@ -136,7 +141,7 @@ void setup()
         &humiditySensor, /*,
         &pwmFan,
         &pwmHeatingPad*/
-    });
+    }, commsMutex);
 
     runConnectionTests({
         &differentialPressureSensor,
@@ -144,7 +149,7 @@ void setup()
         &temperatureSensor,
         &humiditySensor,
         &thermocoupleSensor
-    });
+    }, commsMutex);
 
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);

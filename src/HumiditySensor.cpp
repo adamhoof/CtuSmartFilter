@@ -1,10 +1,9 @@
 #include "HumiditySensor.h"
 #include <Arduino.h>
-#include <InvalidValue.h>
 
-HumiditySensor::HumiditySensor(const char* name, const byte address, const HTU21D& htu)
+HumiditySensor::HumiditySensor(const char* name, const byte address, const HTU21D& htu, SemaphoreHandle_t commsMutex)
     : I2CDevice(address),
-      SensorDevice(name, "room_humidity", "%"),
+      SensorDevice(name, "room_humidity", "%", commsMutex),
       htu21d(htu)
 {
 }
@@ -14,7 +13,7 @@ void HumiditySensor::init()
     htu21d.begin();
 }
 
-Measurement HumiditySensor::readHumidity()
+Measurement HumiditySensor::doMeasurement()
 {
     const float humidity = htu21d.readHumidity();
     if (humidity == HTU21D_ERROR) {
@@ -23,11 +22,6 @@ Measurement HumiditySensor::readHumidity()
         return newInvalidMeasurement(errorMessage);
     }
     return newValidMeasurement(humidity);
-}
-
-Measurement HumiditySensor::performMeasurement()
-{
-    return readHumidity();
 }
 
 CommunicationAttemptResult HumiditySensor::testCommunication()

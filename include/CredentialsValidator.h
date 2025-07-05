@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FlashStore/Credentials.h"
+#include "Credentials.h"
 #include "MqttClientWrapper.h"
 
 enum class ValidationResult {

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <CommunicationTestable.h>
 #include <SensorDevice.h>
 #include "I2CDevice.h"
@@ -8,15 +7,13 @@
 
 class HumiditySensor : public I2CDevice, public SensorDevice, public CommunicationTestable {
 public:
-    HumiditySensor(const char* name, byte address, const HTU21D& htu);
+    HumiditySensor(const char* name, byte address, const HTU21D& htu, SemaphoreHandle_t commsMutex);
 
     void init() override;
 
     CommunicationAttemptResult testCommunication() override;
 
-    Measurement performMeasurement() override;
-
 private:
+    Measurement doMeasurement() override;
     HTU21D htu21d;
-    Measurement readHumidity();
 };

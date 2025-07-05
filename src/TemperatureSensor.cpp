@@ -1,10 +1,9 @@
 #include "TemperatureSensor.h"
 #include <Arduino.h>
-#include <InvalidValue.h>
 
-TemperatureSensor::TemperatureSensor(const char* name, const byte address, const HTU21D& htu)
+TemperatureSensor::TemperatureSensor(const char* name, const byte address, const HTU21D& htu, SemaphoreHandle_t commsMutex)
     : I2CDevice(address),
-      SensorDevice(name, "room_temperature", "°C"),
+      SensorDevice(name, "room_temperature", "°C", commsMutex),
       htu21d(htu)
 {
 }
@@ -14,7 +13,7 @@ void TemperatureSensor::init()
     htu21d.begin();
 }
 
-Measurement TemperatureSensor::readTemperature()
+Measurement TemperatureSensor::doMeasurement()
 {
     const float temperature = htu21d.readTemperature();
     if (temperature == HTU21D_ERROR) {
@@ -23,11 +22,6 @@ Measurement TemperatureSensor::readTemperature()
         return newInvalidMeasurement(errorMessage);
     }
     return newValidMeasurement(temperature);
-}
-
-Measurement TemperatureSensor::performMeasurement()
-{
-    return readTemperature();
 }
 
 CommunicationAttemptResult TemperatureSensor::testCommunication()

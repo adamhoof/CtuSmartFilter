@@ -3,7 +3,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "FlashStore/Credentials.h"
+#include "Credentials.h"
 
 extern espMqttClientSecure mqttClient;
 extern QueueHandle_t mqttPublishQueue;
