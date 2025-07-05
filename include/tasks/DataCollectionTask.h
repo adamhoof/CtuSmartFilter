@@ -4,7 +4,7 @@
 
 #include "SensorDataBank.h"
 
-struct MeasurementsPerformingTaskParams {
+struct DataCollectionTaskParams {
   std::vector<SensorDevice*> sensorsToCollectMeasurementsFrom;
   SensorDataBank& sensorDataBank;
 };

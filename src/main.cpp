@@ -11,7 +11,7 @@
 #include <WiFi.h>
 #include <freertos/task.h>
 #include <tasks/DataCollectionTask.h>
-#include <tasks/FilterRegenTask.h>
+#include <tasks/FilterCycleTask.h>
 #include <tasks/NetworkTask.h>
 #include "HumiditySensor.h"
 #include "MqttClientWrapper.h"
@@ -99,6 +99,7 @@ void setup()
     static FlashStore& flashStore = FlashStore::getInstance();
     static Credentials credentials;
     const CredentialsStatus credentialsStatus = flashStore.getCredentialsUpdateStatus();
+    // TODO if failed to fetch from actual, try to fetch from staging
     fetchCredentials(credentials, flashStore, credentialsStatus);
 
     configureMqttClient(credentials);
@@ -161,7 +162,7 @@ void setup()
         Serial.print(".");
     }
 
-    static auto dataCollectionTaskParams = MeasurementsPerformingTaskParams{
+    static auto dataCollectionTaskParams = DataCollectionTaskParams{
         .sensorsToCollectMeasurementsFrom = {
             &differentialPressureSensor,
             &co2Sensor,
@@ -173,14 +174,13 @@ void setup()
     };
     xTaskCreate(dataCollectionTask, "dataCollectionTask", 8192, &dataCollectionTaskParams, 1, nullptr);
 
-    /*auto filterRegenTaskParams = new FilterRegenTaskParams{
-            .co2Sensor = co2Sensor,
+    auto filterRegenTaskParams = new FilterRegenTaskParams{
             .fan = pwmFan,
             .heatingPad = pwmHeatingPad,
-            .thermocoupleSensor = thermocoupleSensor,
-            nullptr
+            .sensorDataBank = sensorDataBank,
+            .conf = FilterRegenTaskConfig{}
         };
-    xTaskCreate(filterRegenTask, "filterRegenTask", 8192, filterRegenTaskParams, 2, nullptr);*/
+    xTaskCreate(filterCycleTask, "filterRegenTask", 8192, filterRegenTaskParams, 2, nullptr);
 
     static auto keepConnectionsAliveTaskParams = KeepConnectionsAliveTaskParams{
         .mqttClient = mqttClient,

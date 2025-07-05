@@ -4,7 +4,7 @@
 
 void dataCollectionTask(void* parameter)
 {
-    const auto* params = static_cast<MeasurementsPerformingTaskParams*>(parameter);
+    const auto* params = static_cast<DataCollectionTaskParams*>(parameter);
 
     static StaticJsonDocument<1024> jsonDoc;
     static char jsonOutputBuffer[1024];
@@ -13,10 +13,8 @@ void dataCollectionTask(void* parameter)
         jsonDoc.clear();
 
         for (const auto& sensor : params->sensorsToCollectMeasurementsFrom) {
-            // Perform measurement and store it temporarily on the stack
             const Measurement m = sensor->performMeasurement();
 
-            // Update the central data bank as before
             if (m.name == nullptr) {
                 continue;
             }
