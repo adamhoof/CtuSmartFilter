@@ -1,8 +1,8 @@
 #pragma once
-
+#include "CO2Sensor.h"
 #include "PWMFan.h"
 #include "PWMHeatingPad.h"
-#include "SensorDataBank.h"
+#include <array>
 
 struct FilterRegenTaskConfig
 {
@@ -17,7 +17,7 @@ struct FilterRegenTaskParams
 {
     PWMFan& fan;
     PWMHeatingPad& heatingPad;
-    SensorDataBank& sensorDataBank;
+    CO2Sensor& co2Sensor;
     FilterRegenTaskConfig conf;
 };
 

@@ -1,9 +1,9 @@
 #include "TemperatureSensor.h"
 #include <Arduino.h>
 
-TemperatureSensor::TemperatureSensor(const char* name, const byte address, const HTU21D& htu, SemaphoreHandle_t commsMutex)
+TemperatureSensor::TemperatureSensor(const char* name, const byte address, HTU21D& htu, const uint64_t measurementRefreshMS, const SemaphoreHandle_t commsMutex)
     : I2CDevice(address),
-      SensorDevice(name, "room_temperature", "°C", commsMutex),
+      SensorDevice(name, "room_temperature", "°C", measurementRefreshMS, commsMutex),
       htu21d(htu)
 {
 }

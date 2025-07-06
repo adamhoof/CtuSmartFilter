@@ -19,8 +19,6 @@ void dataCollectionTask(void* parameter)
                 continue;
             }
 
-            params->sensorDataBank.updateMeasurement(sensor->getName(), m);
-
             JsonObject measurementObject = jsonDoc[m.name].to<JsonObject>();
 
             if (strcmp(m.statusMessage.data(), "OK") == 0) {

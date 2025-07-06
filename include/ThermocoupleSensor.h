@@ -7,7 +7,7 @@
 class ThermocoupleSensor : public SensorDevice, public CommunicationTestable
 {
 public:
-    explicit ThermocoupleSensor(const char* name, int8_t csPin, SemaphoreHandle_t commsMutex);
+    explicit ThermocoupleSensor(const char* name, int8_t csPin, uint64_t measurementRefreshMS, SemaphoreHandle_t commsMutex);
 
     void init() override;
 

@@ -15,7 +15,6 @@
 #include <tasks/NetworkTask.h>
 #include "HumiditySensor.h"
 #include "MqttClientWrapper.h"
-#include "SensorDataBank.h"
 #include "CredentialsValidator.h"
 #include "LockGuard.h"
 #include "FlashStore.h"
@@ -112,26 +111,18 @@ void setup()
     configureMqttClient(credentials);
     publishCredentialsStatus(credentialsStatus);
 
-    static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25, commsMutex);
-    static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62, commsMutex);
+    static DifferentialPressureSensor differentialPressureSensor("FilterDifferentialPressureSensor", 0x25, 6000, commsMutex);
+    static CO2Sensor co2Sensor("RoomCO2Sensor", 0x62, 6500, commsMutex);
 
     // To keep things simple, the multi value HTU21D sensor is split into 2 different sensors, that both use the same physical sensor
     static HTU21D htu21d;
-    static TemperatureSensor temperatureSensor("RoomTemperatureSensor", 0x40, htu21d, commsMutex);
-    static HumiditySensor humiditySensor("RoomHumiditySensor", 0x40, htu21d, commsMutex);
+    static TemperatureSensor temperatureSensor("RoomTemperatureSensor", 0x40, htu21d, 5000, commsMutex);
+    static HumiditySensor humiditySensor("RoomHumiditySensor", 0x40, htu21d, 5000, commsMutex);
 
-    static ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", csPin, commsMutex);
+    static ThermocoupleSensor thermocoupleSensor("FilterThermocoupleSensor", csPin, 2000, commsMutex);
 
     static PWMFan pwmFan("PWMFan", 26);
     static PWMHeatingPad pwmHeatingPad("PWMHeatingPad", 16);
-
-    static SensorDataBank sensorDataBank(std::vector<const char*>{
-        temperatureSensor.getName(),
-        humiditySensor.getName(),
-        differentialPressureSensor.getName(),
-        co2Sensor.getName(),
-        thermocoupleSensor.getName(),
-    });
 
     initializeDevices({
         &thermocoupleSensor,
@@ -175,14 +166,13 @@ void setup()
             &humiditySensor,
             &thermocoupleSensor
         },
-        .sensorDataBank = sensorDataBank
     };
     xTaskCreate(dataCollectionTask, "dataCollectionTask", 8192, &dataCollectionTaskParams, 1, nullptr);
 
     auto filterRegenTaskParams = new FilterRegenTaskParams{
             .fan = pwmFan,
             .heatingPad = pwmHeatingPad,
-            .sensorDataBank = sensorDataBank,
+            .co2Sensor = co2Sensor,
             .conf = FilterRegenTaskConfig{}
         };
     xTaskCreate(filterCycleTask, "filterRegenTask", 8192, filterRegenTaskParams, 2, nullptr);

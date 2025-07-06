@@ -2,9 +2,9 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address, SemaphoreHandle_t commsMutex)
+DifferentialPressureSensor::DifferentialPressureSensor(const char* name, const uint8_t address, const uint64_t measurementRefreshMS, const SemaphoreHandle_t commsMutex)
     : I2CDevice(address),
-      SensorDevice(name, "filter_differential_pressure", "Pa", commsMutex){}
+      SensorDevice(name, "filter_differential_pressure", "Pa", measurementRefreshMS, commsMutex){}
 
 void DifferentialPressureSensor::init()
 {

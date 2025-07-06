@@ -8,7 +8,7 @@
 class DifferentialPressureSensor : public I2CDevice, public SensorDevice, public CommunicationTestable
 {
 public:
-    DifferentialPressureSensor(const char* name, byte address, SemaphoreHandle_t commsMutex);
+    DifferentialPressureSensor(const char* name, byte address, uint64_t measurementRefreshMS, SemaphoreHandle_t commsMutex);
 
     void init() override;
 

@@ -1,5 +1,4 @@
 #include "tasks/FilterCycleTask.h"
-#include "CO2Sensor.h"
 
 bool isCo2LevelAboveThreshold(const double co2Val, const double co2Threshold)
 {
@@ -45,10 +44,10 @@ void regulateCO2(const FilterRegenTaskParams* p)
 
     while (xTaskGetTickCount() - periodStartTime < periodDuration) {
         Serial.printf("Is CO2 high?: %d, value: %f\n",
-                      isCo2LevelAboveThreshold(p->sensorDataBank.getMeasurement("RoomCO2Sensor").value,
-                                               p->conf.co2Threshold), p->sensorDataBank.getMeasurement("RoomCO2Sensor").value);
+                      isCo2LevelAboveThreshold(p->co2Sensor.performMeasurement().value,
+                                               p->conf.co2Threshold), p->co2Sensor.performMeasurement().value);
 
-        isCo2LevelAboveThreshold(p->sensorDataBank.getMeasurement("RoomCO2Sensor").value, p->conf.co2Threshold)
+        isCo2LevelAboveThreshold(p->co2Sensor.performMeasurement().value, p->conf.co2Threshold)
             ? p->fan.runAtMax()
             : p->fan.runAtIdle();
 
@@ -57,7 +56,7 @@ void regulateCO2(const FilterRegenTaskParams* p)
 
     // second comes the regulation that makes sure the CO2 is acceptable
     p->fan.runAtMax();
-    while (isCo2LevelAboveThreshold(p->sensorDataBank.getMeasurement("RoomCO2Sensor").value, p->conf.co2Threshold)) {
+    while (isCo2LevelAboveThreshold(p->co2Sensor.performMeasurement().value, p->conf.co2Threshold)) {
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
     p->fan.runAtIdle();

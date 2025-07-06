@@ -13,5 +13,5 @@ public:
     LockGuard& operator=(LockGuard&&) = delete;
 
 private:
-    SemaphoreHandle_t _mutex;
+    SemaphoreHandle_t mutex;
 };

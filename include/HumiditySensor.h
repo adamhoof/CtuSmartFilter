@@ -7,7 +7,7 @@
 
 class HumiditySensor : public I2CDevice, public SensorDevice, public CommunicationTestable {
 public:
-    HumiditySensor(const char* name, byte address, const HTU21D& htu, SemaphoreHandle_t commsMutex);
+    HumiditySensor(const char* name, byte address, const HTU21D& htu, uint64_t measurementRefreshMS, SemaphoreHandle_t commsMutex);
 
     void init() override;
 

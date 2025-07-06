@@ -1,8 +1,8 @@
 #include "CO2Sensor.h"
 #include <Arduino.h>
 
-CO2Sensor::CO2Sensor(const char* name, const uint8_t address, SemaphoreHandle_t commsMutex)
-    : I2CDevice(address), SensorDevice(name, "room_co2_concentration", "ppm", commsMutex)
+CO2Sensor::CO2Sensor(const char* name, const uint8_t address, const uint64_t measurementRefreshMS, const SemaphoreHandle_t commsMutex)
+    : I2CDevice(address), SensorDevice(name, "room_co2_concentration", "ppm", measurementRefreshMS, commsMutex)
 {
 }
 

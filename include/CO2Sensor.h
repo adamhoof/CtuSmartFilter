@@ -7,7 +7,7 @@
 class CO2Sensor : public I2CDevice, public SensorDevice, public CommunicationTestable
 {
 public:
-    CO2Sensor(const char* name, uint8_t address, SemaphoreHandle_t commsMutex);
+    CO2Sensor(const char* name, uint8_t address, uint64_t measurementRefreshMS, SemaphoreHandle_t commsMutex);
 
     void init() override;
 

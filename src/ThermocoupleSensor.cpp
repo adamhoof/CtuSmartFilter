@@ -2,8 +2,8 @@
 #include <SPI.h>
 #include <Arduino.h>
 
-ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin, SemaphoreHandle_t commsMutex)
-    : SensorDevice(name, "filter_temperature", "°C", commsMutex),
+ThermocoupleSensor::ThermocoupleSensor(const char* name, const int8_t csPin, const uint64_t measurementRefreshMS, const SemaphoreHandle_t commsMutex)
+    : SensorDevice(name, "filter_temperature", "°C", measurementRefreshMS, commsMutex),
       thermocouple(csPin, &SPI){}
 
 void ThermocoupleSensor::init()
