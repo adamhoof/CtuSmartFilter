@@ -1,32 +1,31 @@
 #include "tasks/NetworkTask.h"
 #include "MqttClientWrapper.h"
 
-void networkTask(void* param)
+[[noreturn]] void networkTask(void* params)
 {
-    auto* params = static_cast<KeepConnectionsAliveTaskParams*>(param);
-    const TickType_t wifiRestartTimeoutTicks = params->wifiRestartTimeoutTicks;
+    const auto* p = static_cast<KeepConnectionsAliveTaskParams*>(params);
+    const TickType_t wifiRestartTimeoutTicks = p->wifiRestartTimeoutTicks;
 
     while (true) {
-        params->mqttClient.loop();
+        p->mqttClient.loop();
         if (WiFi.isConnected()) {
-            /*loop() does nothing if _state is disconnected, but is crucial in any other phase (see switch inside the loop())
-              it needs to be called before the WiFi.connected() check to correctly detect MQTT client disconnection in the WiFi is disconnected*/
-            // connect() does nothing in every _state other than disconnected, safe to call multiple times in a row even if currently connecting
+            /*loop() does nothing if the internal _state is disconnected, but is crucial in any other phase (see switch inside the loop())
+              it needs to be called before the WiFi.connected() check to correctly detect MQTT client disconnection if the WiFi is disconnected
+              connect() does nothing in every _state other than disconnected, safe to call multiple times in a row even if currently connecting */
             if (!mqttClient.connected()) {
-                params->mqttClient.connect();
+                p->mqttClient.connect();
             }
             else {
                 MqttPublishMessage msg{};
                 if (xQueueReceive(mqttPublishQueue, &msg, 0) == pdPASS) {
-                    params->mqttClient.publish(msg.topic, msg.qos, msg.retain, msg.payload);
+                    p->mqttClient.publish(msg.topic, msg.qos, msg.retain, msg.payload);
                 }
             }
         }
-        else {
+        else { // WiFi is not connected
             /* prerequisite to this block is WiFi.autoReconnect(true)
-                               if the prerequisite ist not met for some reason, uncomment the reconnect() and 2000 ->
-                               this is a way, with some compromises, to combat complete WiFi AP disappearance
-                               */
+               if the prerequisite ist not met for some reason, uncomment the reconnect() and 2000 ->
+               this is a way, with some compromises, to combat complete WiFi AP disappearance */
             const TickType_t startTime = xTaskGetTickCount();
 
             while (!WiFi.isConnected() && (xTaskGetTickCount() - startTime < wifiRestartTimeoutTicks)) {

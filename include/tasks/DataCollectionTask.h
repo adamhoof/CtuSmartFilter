@@ -3,7 +3,7 @@
 #include <vector>
 
 struct DataCollectionTaskParams {
-  std::vector<SensorDevice*> sensorsToCollectMeasurementsFrom;
+  std::vector<SensorDevice*> sensors;
 };
 
-void dataCollectionTask(void* parameter);
+void dataCollectionTask(void* params);

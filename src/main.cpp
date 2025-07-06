@@ -159,7 +159,7 @@ void setup()
     }
 
     static auto dataCollectionTaskParams = DataCollectionTaskParams{
-        .sensorsToCollectMeasurementsFrom = {
+        .sensors = {
             &differentialPressureSensor,
             &co2Sensor,
             &temperatureSensor,
@@ -169,13 +169,14 @@ void setup()
     };
     xTaskCreate(dataCollectionTask, "dataCollectionTask", 8192, &dataCollectionTaskParams, 1, nullptr);
 
-    auto filterRegenTaskParams = new FilterRegenTaskParams{
+    static auto filterCycleTaskParams = FilterCycleTaskParams{
             .fan = pwmFan,
             .heatingPad = pwmHeatingPad,
-            .co2Sensor = co2Sensor,
+            .roomCo2Sensor = co2Sensor,
+            .filterThermocoupleSensor = thermocoupleSensor,
             .conf = FilterRegenTaskConfig{}
         };
-    xTaskCreate(filterCycleTask, "filterRegenTask", 8192, filterRegenTaskParams, 2, nullptr);
+    xTaskCreate(filterCycleTask, "filterCycleTask", 8192, &filterCycleTaskParams, 2, nullptr);
 
     static auto keepConnectionsAliveTaskParams = KeepConnectionsAliveTaskParams{
         .mqttClient = mqttClient,
