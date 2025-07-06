@@ -17,6 +17,7 @@ public:
     virtual CommunicationAttemptResult testCommunication() = 0;
     bool isReliable() const;
     void updateMeasurementRefreshMS(uint64_t measurementRefreshMS);
+    uint64_t getMeasurementRefreshMS() const;
 
 protected:
     virtual Measurement doMeasurement() = 0;

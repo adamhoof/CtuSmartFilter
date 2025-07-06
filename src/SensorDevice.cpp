@@ -65,6 +65,11 @@ void SensorDevice::updateMeasurementRefreshMS(const uint64_t measurementRefreshM
     measurementRefresh = pdMS_TO_TICKS(measurementRefreshMS);
 }
 
+uint64_t SensorDevice::getMeasurementRefreshMS() const
+{
+    LockGuard lockGuard(valueMutex);
+    return pdTICKS_TO_MS(measurementRefresh);
+}
 
 Measurement SensorDevice::newValidMeasurement(const double value) const
 {
