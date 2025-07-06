@@ -26,7 +26,7 @@ static constexpr uint8_t misoPin = 19;
 static constexpr uint8_t sdaPin = 21;
 static constexpr uint8_t sclPin = 22;
 
-void initializeBusses(SemaphoreHandle_t commsMutex)
+void initializeBusses(const SemaphoreHandle_t commsMutex)
 {
     // avoid dangling miso pin state when disconnected
     pinMode(misoPin, INPUT_PULLUP);
@@ -38,7 +38,7 @@ void initializeBusses(SemaphoreHandle_t commsMutex)
     SPI.begin(sckPin, misoPin);
 }
 
-void initializeDevices(const std::vector<Device*>& devices, SemaphoreHandle_t commsMutex)
+void initializeDevices(const std::vector<Device*>& devices, const SemaphoreHandle_t commsMutex)
 {
     for (auto& device: devices) {
         LockGuard lockGuard(commsMutex);
@@ -47,7 +47,7 @@ void initializeDevices(const std::vector<Device*>& devices, SemaphoreHandle_t co
     }
 }
 
-void runConnectionTests(const std::vector<CommunicationTestable*>& devices, SemaphoreHandle_t commsMutex)
+void runConnectionTests(const std::vector<CommunicationTestable*>& devices, const SemaphoreHandle_t commsMutex)
 {
     for (const auto& r: CommunicationTester::testDevices(devices, commsMutex)) {
         Serial.print(r.resultStatus == SUCCESS ? "SUCCESS: " : "FAILURE: ");
