@@ -71,7 +71,7 @@ uint64_t SensorDevice::getMeasurementRefreshMS() const
     return pdTICKS_TO_MS(measurementRefresh);
 }
 
-Measurement SensorDevice::newValidMeasurement(const double value) const
+Measurement SensorDevice::newValidMeasurement(const float value) const
 {
     return {measurementName, value, measurementUnit, make_error_array("OK")};
 }

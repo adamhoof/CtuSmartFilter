@@ -22,7 +22,7 @@ public:
 protected:
     virtual Measurement doMeasurement() = 0;
 
-    Measurement newValidMeasurement(double value) const;
+    Measurement newValidMeasurement(float value) const;
     Measurement newInvalidMeasurement(const char* errorMessage) const;
 
     const char* measurementName;

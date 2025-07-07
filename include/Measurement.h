@@ -5,7 +5,7 @@
 
 struct Measurement {
     const char* name{""};
-    double value{};
+    float value{};
     const char* unit{""};
     std::array<char, MAX_STATUS_MSG_LEN> statusMessage{};
 };

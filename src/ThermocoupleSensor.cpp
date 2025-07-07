@@ -32,9 +32,7 @@ Measurement ThermocoupleSensor::doMeasurement()
         return newInvalidMeasurement(errorMessage);
     }
 
-    const double temperature = thermocouple.getCelsius();
-
-    return newValidMeasurement(temperature);
+    return newValidMeasurement(thermocouple.getCelsius());
 }
 
 CommunicationAttemptResult ThermocoupleSensor::testCommunication() {
