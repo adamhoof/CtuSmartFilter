@@ -129,9 +129,9 @@ void setup()
         &differentialPressureSensor,
         &co2Sensor,
         &temperatureSensor,
-        &humiditySensor, /*,
+        &humiditySensor,
         &pwmFan,
-        &pwmHeatingPad*/
+        &pwmHeatingPad
     }, commsMutex);
 
     runConnectionTests({
@@ -174,7 +174,10 @@ void setup()
             .heatingPad = pwmHeatingPad,
             .roomCo2Sensor = co2Sensor,
             .filterThermocoupleSensor = thermocoupleSensor,
-            .conf = FilterRegenTaskConfig{}
+            .c = FilterCycleTaskConfig{
+                .co2Config = Co2Config{},
+                .heatPadConfig = HeatPadConfig{}
+            }
         };
     xTaskCreate(filterCycleTask, "filterCycleTask", 8192, &filterCycleTaskParams, 2, nullptr);
 
