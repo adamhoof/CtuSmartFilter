@@ -22,7 +22,7 @@ void PWMControlDevice::setPower(const uint8_t percent) {
     if (powerLevel == percent) {
         return;
     }
-    powerLevel = map(0, 100, 0, 255, percent);
+    powerLevel = map(percent, 0, 100, 0, 255);
     analogWrite(pwmPin, powerLevel);
 }
 
