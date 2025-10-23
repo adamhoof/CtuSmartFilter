@@ -26,6 +26,8 @@
             /* prerequisite to this block is WiFi.autoReconnect(true)
                if the prerequisite ist not met for some reason, uncomment the reconnect() and 2000 ->
                this is a way, with some compromises, to combat complete WiFi AP disappearance */
+
+            // TODO if (WiFi.getAutoConnect()) instead of this comment uptop
             const TickType_t startTime = xTaskGetTickCount();
 
             while (!WiFi.isConnected() && (xTaskGetTickCount() - startTime < wifiRestartTimeoutTicks)) {

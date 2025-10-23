@@ -91,6 +91,7 @@ bool regenerateFilter(const FilterCycleTaskParams* p)
     pidController.switchStrategy(p->c.heatPadConfig.aggressivePID);
     pidController.setAutomatic();
 
+    // TODO run max for 2 mins, if cant heatup, send ERROR
     while (true) {
         if (!runPidIteration(pidController, p, currentTemp)) {
             return false;
